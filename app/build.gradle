@@ -45,6 +45,9 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.navigation.fragment.ktx
     implementation libs.androidx.navigation.ui.ktx
+    implementation 'androidx.camera:camera-core:1.2.3'
+    implementation 'com.google.mediapipe:tasks-vision:0.10.0'
+
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
