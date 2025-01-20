@@ -20,7 +20,6 @@ import android.view.LayoutInflater
 import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -100,7 +99,7 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
                 context = requireContext(),
                 threshold = 0.8f,
                 currentDelegate = ObjectDetectorHelper.DELEGATE_CPU,
-                modelName = "cars.tflite",
+                modelName = "cars_4.tflite",
                 maxResults = ObjectDetectorHelper.MAX_RESULTS_DEFAULT,
                 runningMode = RunningMode.IMAGE,
                 objectDetectorListener = this
@@ -130,7 +129,7 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
         } catch (e: CameraAccessException) {
             e.printStackTrace()
         }
-        val fragment: androidx.fragment.app.Fragment
+        val fragment: Fragment
         val camera2Fragment = CameraConnectionFragment.newInstance(
             object :
                 CameraConnectionFragment.ConnectionCallback {
@@ -249,9 +248,9 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
         canvas.drawBitmap(rgbFrameBitmap!!, frameToCropTransform!!, null)
 
         //TODO pass image to model and get results
-        var resultBundle = objectDetectorHelper.detectImage(rgbFrameBitmap!!);
+        var resultBundle = objectDetectorHelper.detectImage(rgbFrameBitmap!!)
         if(resultBundle != null){
-            var results = ArrayList<Recognition>();
+            var results = ArrayList<Recognition>()
             var resultsList = resultBundle.results
             for(singleResult in resultsList){
                 var detections = singleResult.detections()
@@ -273,7 +272,7 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
                             objectName,
                             objectScore,
                             singleDetection.boundingBox()
-                        );
+                        )
                     results.add(recognition)
                 }
             }
@@ -309,16 +308,12 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     override fun onError(error: String, errorCode: Int) {
-        Log.d("TTT","onError: $error");
+        Log.d("TTT","onError: $error")
     }
 
     override fun onResults(resultBundle: ObjectDetectorHelper.ResultBundle) {
-        Log.d("TTT","onResults: $resultBundle");
+        Log.d("TTT","onResults: $resultBundle")
     }
 
     override fun onDestroyView() {

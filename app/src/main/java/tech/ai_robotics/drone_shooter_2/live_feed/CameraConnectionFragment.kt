@@ -11,14 +11,22 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.*
+import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.TotalCaptureResult
 import android.media.ImageReader
 import android.media.ImageReader.OnImageAvailableListener
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.LayoutInflater
@@ -32,7 +40,8 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import tech.ai_robotics.drone_shooter_2.R
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -242,10 +251,6 @@ class CameraConnectionFragment @SuppressLint("ValidFragment") private constructo
         textureView = view.findViewById<View>(R.id.texture) as AutoFitTextureView
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-    }
-
     override fun onResume() {
         super.onResume()
         startBackgroundThread()
@@ -313,6 +318,7 @@ class CameraConnectionFragment @SuppressLint("ValidFragment") private constructo
 
     @SuppressLint("MissingPermission")
     private fun openCamera(width: Int, height: Int) {
+        Log.d("TTT1 openCamera", "width = $width, height = $height")
         setUpCameraOutputs()
         configureTransform(width, height)
         val activity = activity
@@ -467,6 +473,7 @@ class CameraConnectionFragment @SuppressLint("ValidFragment") private constructo
      * @param viewHeight The height of `mTextureView`
      */
     private fun configureTransform(viewWidth: Int, viewHeight: Int) {
+        Log.d("TTT1 openCamera", "viewWidth = $viewWidth, viewHeight = $viewHeight")
         val activity = activity
         if (null == textureView || null == previewSize || null == activity) {
             return
