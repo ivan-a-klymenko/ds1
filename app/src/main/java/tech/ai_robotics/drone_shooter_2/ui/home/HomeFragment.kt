@@ -99,7 +99,7 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
                 context = requireContext(),
                 threshold = 0.8f,
                 currentDelegate = ObjectDetectorHelper.DELEGATE_CPU,
-                modelName = "cars_4.tflite",
+                modelName = "cars_v1_2.tflite",
                 maxResults = ObjectDetectorHelper.MAX_RESULTS_DEFAULT,
                 runningMode = RunningMode.IMAGE,
                 objectDetectorListener = this
