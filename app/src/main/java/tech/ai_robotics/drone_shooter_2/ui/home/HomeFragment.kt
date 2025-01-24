@@ -113,6 +113,7 @@ class HomeFragment : Fragment(), ImageReader.OnImageAvailableListener, ObjectDet
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         //TODO show live camera footage
+
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             //TODO show live camera footage
             setFragment()
