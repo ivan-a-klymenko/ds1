@@ -1,4 +1,4 @@
-package tech.ai_robotics.drone_shooter_2.drawing
+package tech.ai_robotics.drone_shooter_2.hamza.drawing
 
 import android.graphics.*
 import android.graphics.Paint.Align
@@ -20,8 +20,7 @@ class BorderedText(interiorColor: Int, exteriorColor: Int, textSize: Float) {
         Color.WHITE,
         Color.BLACK,
         textSize
-    ) {
-    }
+    )
 
     fun setTypeface(typeface: Typeface?) {
         interiorPaint.typeface = typeface

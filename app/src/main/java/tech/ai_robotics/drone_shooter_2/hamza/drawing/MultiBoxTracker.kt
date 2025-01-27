@@ -1,16 +1,21 @@
-package tech.ai_robotics.drone_shooter_2.drawing
+package tech.ai_robotics.drone_shooter_2.hamza.drawing
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.graphics.Paint.Cap
 import android.graphics.Paint.Join
+import android.graphics.RectF
 import android.text.TextUtils
 import android.util.Log
 import android.util.Pair
 import android.util.TypedValue
+import tech.ai_robotics.drone_shooter_2.hamza.ml.Recognition
 import tech.ai_robotics.drone_shooter_2.live_feed.ImageUtils
-import tech.ai_robotics.drone_shooter_2.ml.Recognition
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 class MultiBoxTracker(context: Context) {
     val screenRects: MutableList<Pair<Float, RectF>> =
@@ -106,10 +111,10 @@ class MultiBoxTracker(context: Context) {
         val rgbFrameToScreen =
             Matrix(frameToCanvasMatrix)
         for (result in results) {
-            if (result.getLocation() == null) {
+            if (result.location == null) {
                 continue
             }
-            val detectionFrameRect = RectF(result.getLocation())
+            val detectionFrameRect = RectF(result.location)
             val detectionScreenRect = RectF()
             rgbFrameToScreen.mapRect(detectionScreenRect, detectionFrameRect)
 
@@ -140,7 +145,7 @@ class MultiBoxTracker(context: Context) {
         for (potential in rectsToTrack) {
             val trackedRecognition = TrackedRecognition()
             trackedRecognition.detectionConfidence = potential.first
-            trackedRecognition.location = RectF(potential.second.getLocation())
+            trackedRecognition.location = RectF(potential.second.location)
             trackedRecognition.title = potential.second.title
             trackedRecognition.color = COLORS[trackedObjects.size]
             trackedObjects.add(trackedRecognition)

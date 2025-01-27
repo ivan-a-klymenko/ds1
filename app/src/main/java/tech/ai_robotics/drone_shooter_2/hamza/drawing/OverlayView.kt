@@ -1,10 +1,10 @@
-package tech.ai_robotics.drone_shooter_2.drawing
+package tech.ai_robotics.drone_shooter_2.hamza.drawing
 
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
-import java.util.*
+import java.util.LinkedList
 
 class OverlayView(
     context: Context?,
