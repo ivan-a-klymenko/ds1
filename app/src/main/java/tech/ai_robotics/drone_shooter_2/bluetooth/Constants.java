@@ -1,7 +1,5 @@
 package tech.ai_robotics.drone_shooter_2.bluetooth;
 
-import com.google.android.datatransport.backend.cct.BuildConfig;
-
 class Constants {
 
     // values have to be globally unique
