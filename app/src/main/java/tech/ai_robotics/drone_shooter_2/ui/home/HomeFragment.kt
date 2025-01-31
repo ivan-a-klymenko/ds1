@@ -53,10 +53,10 @@ import java.util.concurrent.Executors
 
 private const val TAG = "HomeFragment"
 private const val STOP = "pp"
-private const val HORIZONTAL_LEFT = "ff"
-private const val HORIZONTAL_RIGHT = "dd"
+private const val HORIZONTAL_LEFT = "kk"
+private const val HORIZONTAL_RIGHT = "xx"
 private const val VERTICAL_TOP = "ff"
-private const val VERTICAL_BOTTOM = "ff"
+private const val VERTICAL_BOTTOM = "dd"
 
 class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, ServiceConnection {
 
