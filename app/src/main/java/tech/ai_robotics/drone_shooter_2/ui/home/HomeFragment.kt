@@ -143,7 +143,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 imageAnalyzer
             )
 
-            preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+            preview?.surfaceProvider = binding.viewFinder.surfaceProvider
         } catch(exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -159,11 +159,14 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
     }
 
     override fun onEmptyDetect() {
-        binding.overlay.invalidate()
+//        binding.overlay.invalidate()
     }
 
     override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
         requireActivity().runOnUiThread {
+            boundingBoxes.forEachIndexed { index, it ->
+                Log.d("TTT onDetect", "$index $it")
+            }
             binding.inferenceTime.text = "${inferenceTime}ms"
             binding.overlay.apply {
                 setResults(boundingBoxes)

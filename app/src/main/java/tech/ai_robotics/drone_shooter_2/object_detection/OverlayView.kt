@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
 import tech.ai_robotics.drone_shooter_2.R
@@ -53,6 +54,10 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
             val top = it.y1 * height
             val right = it.x2 * width
             val bottom = it.y2 * height
+            Log.d("TTT draw", """top = $top
+                |left = $left, right = $right
+                |bottom = $bottom
+            """.trimMargin())
 
             canvas.drawRect(left, top, right, bottom, boxPaint)
             val drawableText = it.clsName

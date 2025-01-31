@@ -3,7 +3,6 @@ package tech.ai_robotics.drone_shooter_2.object_detection
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
@@ -124,9 +123,6 @@ class Detector(
             }
 
             if (maxConf > CONFIDENCE_THRESHOLD) {
-                Log.d("TTT", """maxIdx = $maxIdx
-                    |labels.size = ${labels.size}
-                """.trimMargin())
                 val clsName = labels[maxIdx]
                 val cx = array[c] // 0
                 val cy = array[c + numElements] // 1
