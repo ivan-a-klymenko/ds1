@@ -17,6 +17,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -40,6 +41,8 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.SerialSocket;
 import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
+
+    private static final String TAG = "TerminalFragment";
 
     private enum Connected { False, Pending, True }
 
@@ -65,6 +68,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceAddress = getArguments().getString("device");
+        Log.d(TAG + " TTT", "onCreate: deviceAddress " + deviceAddress);
     }
 
     @Override
@@ -246,6 +250,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             receiveText.append(spn);
             service.write(data);
+            Log.d(TAG + " send", data.toString());
         } catch (Exception e) {
             onSerialIoError(e);
         }

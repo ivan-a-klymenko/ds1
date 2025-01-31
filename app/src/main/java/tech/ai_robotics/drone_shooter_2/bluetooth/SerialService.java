@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -27,6 +28,8 @@ import tech.ai_robotics.drone_shooter_2.R;
  * use listener chain: SerialSocket -> SerialService -> UI fragment
  */
 public class SerialService extends Service implements SerialListener {
+
+    private static final String TAG = "SerialService";
 
     public class SerialBinder extends Binder {
         public SerialService getService() { return SerialService.this; }
@@ -84,6 +87,7 @@ public class SerialService extends Service implements SerialListener {
      * Api
      */
     public void connect(SerialSocket socket) throws IOException {
+        Log.d(TAG + " TTT", "connect");
         socket.connect(this);
         this.socket = socket;
         connected = true;

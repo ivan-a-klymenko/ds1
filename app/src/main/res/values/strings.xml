@@ -8,4 +8,7 @@
     <string name="bluetooth_permission_grant">Bluetooth permission is required by this App. Please grant in next dialog.</string>
     <string name="bluetooth_permission_denied">Bluetooth permission was permanently denied. You have to enable permission \"%s\" in App settings.</string>
     <string name="devices">Bluetooth Devices</string>
+    <string name="button_right">Right</string>
+    <string name="button_left">Left</string>
+    <string name="button_stop">Stop</string>
 </resources>
