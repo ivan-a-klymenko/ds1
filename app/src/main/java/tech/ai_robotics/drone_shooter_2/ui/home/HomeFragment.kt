@@ -53,13 +53,23 @@ import java.util.concurrent.Executors
 
 private const val TAG = "HomeFragment"
 private const val STOP = "pp"
-private const val HORIZONTAL_LEFT = "kk"
-private const val HORIZONTAL_RIGHT = "xx"
+private const val HORIZONTAL_LEFT = "xx"
+private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
+private const val LEFT_50 = "LEFT 50"
+private const val RIGHT_50 = "RIGHT 50"
+
+private const val LEFT = "LEFT"
+private const val RIGHT = "RIGHT"
+private const val DONE = "DONE"
+
+private const val STOP_DELAY = 500L
 
 class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, ServiceConnection {
 
+    private var sendAvailable: Boolean = true
+    private var command = STOP
     private var initialStart = true
     private val hexEnabled: Boolean = false
     private var pendingNewline = false
@@ -126,10 +136,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 send(STOP)
             }
             btLeft.setOnClickListener {
-                send(HORIZONTAL_LEFT)
+                send(LEFT_50)
             }
             btRight.setOnClickListener {
-                send(HORIZONTAL_RIGHT)
+                send(RIGHT_50)
             }
         }
     }
@@ -278,10 +288,35 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             boundingBoxes.forEachIndexed { index, it ->
                 Log.d("TTT onDetect", "$index $it")
             }
+            handleDetectedObject(boundingBoxes)
             binding.inferenceTime.text = "${inferenceTime}ms"
             binding.overlay.apply {
                 setResults(boundingBoxes)
                 invalidate()
+            }
+        }
+    }
+
+    private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
+        val box = boundingBoxes.minByOrNull {
+            it.cx
+        }
+        box?.let {
+            val angle = when (it.cx) {
+                in 0.0 .. 0.2, in 0.8 .. 1.0   -> 10
+                in 0.21 .. 0.4, in 0.6 .. 0.79   -> 5
+                in 0.41 .. 0.48, in 0.52 .. 0.59   -> 1
+                else -> -1
+            }
+            val com = when  {
+                it.cx < 0.49 -> "$LEFT $angle"
+                it.cx > 0.51 -> "$RIGHT $angle"
+                else -> ""
+            }
+            if (com != command) {
+                command = com
+                sendAvailable = false
+                send(command)
             }
         }
     }
@@ -354,6 +389,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             }
         }
         Log.d("$TAG TTT receive", spn.toString())
+        if (spn.toString().contains(DONE)) {
+            sendAvailable = true
+        }
     }
 
     private fun status(str: String) {
@@ -398,6 +436,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun send(str: String) {
+        Log.d("$TAG TTT", "send: $str")
         if (connected != TRUE) {
             Toast.makeText(activity, "not connected", Toast.LENGTH_SHORT).show()
             return

@@ -1,6 +1,9 @@
 package tech.ai_robotics.drone_shooter_2.ui.notifications
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +19,7 @@ class NotificationsFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,11 +36,26 @@ class NotificationsFragment : Fragment() {
         notificationsViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
+        textView.setOnClickListener {
+            testEvent()
+        }
         return root
+    }
+
+    private fun testEvent() {
+        Log.d("TTT testEvent", System.currentTimeMillis().toString())
+        handler.postDelayed(
+            {
+                Log.d("TTT postDelayed", System.currentTimeMillis().toString())
+            },
+            500
+        )
+
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        handler.removeCallbacksAndMessages(null)
     }
 }

@@ -105,6 +105,7 @@ public class SerialService extends Service implements SerialListener {
     public void write(byte[] data) throws IOException {
         if(!connected)
             throw new IOException("not connected");
+        Log.d(TAG + " TTT write", data.toString());
         socket.write(data);
     }
 
