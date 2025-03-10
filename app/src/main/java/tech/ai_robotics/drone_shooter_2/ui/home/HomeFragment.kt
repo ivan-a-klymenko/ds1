@@ -47,9 +47,14 @@ import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MODEL_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.util.ArrayDeque
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.absoluteValue
 
 private const val TAG = "HomeFragment"
 private const val STOP = "pp"
@@ -61,17 +66,15 @@ private const val L_50 = "L 50"
 private const val R_50 = "R 50"
 private const val T_50 = "T 50"
 private const val B_50 = "B 50"
-
-private const val LEFT = "LEFT"
-private const val RIGHT = "RIGHT"
 private const val DONE = "DONE"
+
+private const val TARGET_HORIZONTAL = 0.5
+private const val TARGET_VERTICAL = 0.5
 
 private const val STOP_DELAY = 500L
 
 class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, ServiceConnection {
 
-    private var sendAvailable: Boolean = true
-    private var command = STOP
     private var initialStart = true
     private val hexEnabled: Boolean = false
     private var pendingNewline = false
@@ -91,6 +94,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private lateinit var detector: Detector
 
     private lateinit var cameraExecutor: ExecutorService
+
+    private val commandSet = mutableSetOf<String>()
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
@@ -307,24 +312,43 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val angle = when (it.cx) {
-                in 0.0 .. 0.2, in 0.8 .. 1.0   -> 10
-                in 0.21 .. 0.4, in 0.6 .. 0.79   -> 5
-                in 0.41 .. 0.48, in 0.52 .. 0.59   -> 1
-                else -> -1
+            val horizontalAngle = getAngle((TARGET_HORIZONTAL - it.cx).absoluteValue)
+            val horizontalDirection = when  {
+                it.cx < 0.49 -> LEFT
+                it.cx > 0.51 -> RIGHT
+                else -> null
             }
-            val com = when  {
-                it.cx < 0.49 -> "$LEFT $angle"
-                it.cx > 0.51 -> "$RIGHT $angle"
-                else -> ""
+            val horizontalCommand = "${horizontalDirection?.commandValue} $horizontalAngle"
+            if (commandSet.contains(LEFT.commandValue).not() && commandSet.contains(RIGHT.commandValue).not()) {
+                horizontalDirection?.commandValue?.let { direction ->
+                    commandSet.add(direction)
+                    send(horizontalCommand)
+                }
             }
-            if (com != command) {
-                command = com
-                sendAvailable = false
-                send(command)
+
+            val verticalAngle = getAngle((TARGET_VERTICAL - it.cy).absoluteValue)
+            val verticalDirection = when  {
+                it.cy < 0.49 -> TOP
+                it.cy > 0.51 -> BOTTOM
+                else -> null
+            }
+            val verticalCommand = "${verticalDirection?.commandValue} $verticalAngle"
+            if (commandSet.contains(TOP.commandValue).not() && commandSet.contains(BOTTOM.commandValue).not()) {
+                verticalDirection?.commandValue?.let { direction ->
+                    commandSet.add(direction)
+                    send(verticalCommand)
+                }
             }
         }
     }
+
+    private fun getAngle(diff: Double) =
+        when (diff) {
+            in 0.3..0.5 -> 10
+            in 0.1..0.29 -> 5
+            in 0.01..0.09 -> 1
+            else -> -1
+        }
 
     private fun disconnect() {
         connected = FALSE
@@ -395,7 +419,15 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
         Log.d("$TAG TTT receive", spn.toString())
         if (spn.toString().contains(DONE)) {
-            sendAvailable = true
+            commandSet.remove(
+                when {
+                    spn.toString().contains(LEFT.commandValue) -> LEFT.commandValue
+                    spn.toString().contains(RIGHT.commandValue) -> RIGHT.commandValue
+                    spn.toString().contains(TOP.commandValue) -> TOP.commandValue
+                    spn.toString().contains(BOTTOM.commandValue) -> BOTTOM.commandValue
+                    else -> {}
+                }
+            )
         }
     }
 
@@ -472,4 +504,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             onSerialIoError(e)
         }
     }
+}
+
+enum class Direction(val commandValue: String){
+    LEFT("L"),
+    RIGHT("R"),
+    TOP("T"),
+    BOTTOM("B");
 }
