@@ -57,8 +57,10 @@ private const val HORIZONTAL_LEFT = "xx"
 private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
-private const val LEFT_50 = "LEFT 50"
-private const val RIGHT_50 = "RIGHT 50"
+private const val L_50 = "L 50"
+private const val R_50 = "R 50"
+private const val T_50 = "T 50"
+private const val B_50 = "B 50"
 
 private const val LEFT = "LEFT"
 private const val RIGHT = "RIGHT"
@@ -132,14 +134,17 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
-            btStop.setOnClickListener {
-                send(STOP)
-            }
             btLeft.setOnClickListener {
-                send(LEFT_50)
+                send(L_50)
             }
             btRight.setOnClickListener {
-                send(RIGHT_50)
+                send(R_50)
+            }
+            btTop.setOnClickListener {
+                send(T_50)
+            }
+            btBottom.setOnClickListener {
+                send(B_50)
             }
         }
     }
