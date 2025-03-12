@@ -12,4 +12,8 @@ data class BoundingBox(
     val cnf: Float,
     val cls: Int,
     val clsName: String
-)
+) {
+    override fun toString(): String {
+        return "BoundingBox(cx=$cx, cy=$cy)"
+    }
+}

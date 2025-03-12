@@ -62,14 +62,14 @@ private const val HORIZONTAL_LEFT = "xx"
 private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
-private const val L_50 = "L 50"
-private const val R_50 = "R 50"
+private const val L_50 = "L 100"
+private const val R_50 = "R 100"
 private const val T_50 = "T 50"
 private const val B_50 = "B 50"
-private const val DONE = "DONE"
+private const val DONE = "MOVE"
 
-private const val TARGET_HORIZONTAL = 0.5
-private const val TARGET_VERTICAL = 0.5
+private const val TARGET_HORIZONTAL = 0.49
+private const val TARGET_VERTICAL = 0.47
 
 private const val STOP_DELAY = 500L
 
@@ -95,7 +95,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
     private lateinit var cameraExecutor: ExecutorService
 
-    private val commandSet = mutableSetOf<String>()
+//    private val commandSet = mutableSetOf<String>()
+    private var hCommand: Direction? = null
+    private var vCommand: Direction? = null
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
@@ -295,8 +297,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
     override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
         requireActivity().runOnUiThread {
-            boundingBoxes.forEachIndexed { index, it ->
-                Log.d("TTT onDetect", "$index $it")
+            if (hCommand == null || vCommand == null) {
+                boundingBoxes.forEachIndexed { index, it ->
+                    Log.d("TTT onDetect", "hCommand $hCommand vCommand $vCommand")
+                    Log.d("TTT onDetect", "$index $it")
+                }
             }
             handleDetectedObject(boundingBoxes)
             binding.inferenceTime.text = "${inferenceTime}ms"
@@ -314,41 +319,47 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         box?.let {
             val horizontalAngle = getAngle((TARGET_HORIZONTAL - it.cx).absoluteValue)
             val horizontalDirection = when  {
-                it.cx < 0.49 -> LEFT
-                it.cx > 0.51 -> RIGHT
+                it.cx < 0.5 -> LEFT
+                it.cx > 0.5 -> RIGHT
                 else -> null
             }
-            val horizontalCommand = "${horizontalDirection?.commandValue} $horizontalAngle"
-            if (commandSet.contains(LEFT.commandValue).not() && commandSet.contains(RIGHT.commandValue).not()) {
-                horizontalDirection?.commandValue?.let { direction ->
-                    commandSet.add(direction)
-                    send(horizontalCommand)
+            horizontalAngle?.let { angle ->
+                horizontalDirection?.let { direction ->
+                    val horizontalCommand = "${direction.commandValue} $angle"
+                    if (hCommand == null && connected == TRUE) {
+                        hCommand = horizontalDirection
+                        send(horizontalCommand)
+                    }
                 }
             }
 
             val verticalAngle = getAngle((TARGET_VERTICAL - it.cy).absoluteValue)
             val verticalDirection = when  {
-                it.cy < 0.49 -> TOP
-                it.cy > 0.51 -> BOTTOM
+                it.cy < 0.5 -> TOP
+                it.cy > 0.5 -> BOTTOM
                 else -> null
             }
-            val verticalCommand = "${verticalDirection?.commandValue} $verticalAngle"
-            if (commandSet.contains(TOP.commandValue).not() && commandSet.contains(BOTTOM.commandValue).not()) {
-                verticalDirection?.commandValue?.let { direction ->
-                    commandSet.add(direction)
-                    send(verticalCommand)
+            verticalAngle?.let { angle ->
+                verticalDirection?.let { direction ->
+                    val verticaCommand = "${direction.commandValue} $angle"
+                    if (vCommand == null && connected == TRUE) {
+                        vCommand = verticalDirection
+                        send(verticaCommand)
+                    }
                 }
             }
         }
     }
 
-    private fun getAngle(diff: Double) =
-        when (diff) {
-            in 0.3..0.5 -> 10
-            in 0.1..0.29 -> 5
-            in 0.01..0.09 -> 1
-            else -> -1
+    private fun getAngle(diff: Double): Int? {
+        Log.d(TAG, "getAngle diff: $diff")
+        return when {
+            diff in 0.3..0.5 -> 10
+            0.15 < diff && diff < 0.3 -> 5
+            diff in 0.05..0.15 -> 1
+            else -> null
         }
+    }
 
     private fun disconnect() {
         connected = FALSE
@@ -417,18 +428,15 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 spn.append(TextUtil.toCaretString(msg, newline.length != 0))
             }
         }
-        Log.d("$TAG TTT receive", spn.toString())
-        if (spn.toString().contains(DONE)) {
-            commandSet.remove(
-                when {
-                    spn.toString().contains(LEFT.commandValue) -> LEFT.commandValue
-                    spn.toString().contains(RIGHT.commandValue) -> RIGHT.commandValue
-                    spn.toString().contains(TOP.commandValue) -> TOP.commandValue
-                    spn.toString().contains(BOTTOM.commandValue) -> BOTTOM.commandValue
-                    else -> {}
-                }
-            )
+        val finishedCommand = spn.toString()
+        if (finishedCommand.contains(LEFT.commandValue) || finishedCommand.contains(RIGHT.commandValue)){
+            hCommand = null
         }
+        if (finishedCommand.contains(TOP.commandValue) || finishedCommand.contains(BOTTOM.commandValue)){
+            vCommand = null
+        }
+        Log.d("$TAG TTT", "receive finishedCommand: $finishedCommand ")
+        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
     }
 
     private fun status(str: String) {
@@ -440,7 +448,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
 //        receiveText.append(spn)
-        Log.d("$TAG TTT status", spn.toString())
+        Log.d("$TAG status", spn.toString())
     }
 
     override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
