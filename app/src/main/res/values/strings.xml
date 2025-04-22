@@ -12,4 +12,9 @@
     <string name="button_left">L</string>
     <string name="button_top">T</string>
     <string name="button_bottom">B</string>
+    <string name="zoom">Zoom</string>
+    <string name="set_zoom">Set Zoom</string>
+    <string name="set_target_horizontal">Set Target Horizontal</string>
+    <string name="target_horizontal">Target Horizontal</string>
+    <string name="target_vertical">Target Vertical</string>
 </resources>

@@ -1,6 +1,7 @@
 package tech.ai_robotics.drone_shooter_2.ui.home
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.ComponentName
@@ -24,6 +25,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -47,6 +49,7 @@ import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MODEL_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
+import tech.ai_robotics.drone_shooter_2.ui.common.Storage
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
@@ -67,9 +70,6 @@ private const val R_50 = "R 100"
 private const val T_50 = "T 50"
 private const val B_50 = "B 50"
 private const val DONE = "MOVE"
-
-private const val TARGET_HORIZONTAL = 0.49
-private const val TARGET_VERTICAL = 0.47
 
 private const val STOP_DELAY = 500L
 
@@ -213,6 +213,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    @SuppressLint("RestrictedApi")
     private fun bindCameraUseCases() {
         val cameraProvider = cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
 
@@ -275,7 +276,16 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 preview,
                 imageAnalyzer
             )
-            camera?.cameraControl?.setZoomRatio(3.0F)
+
+            val info: CameraInfo? = camera?.cameraInfo
+            val zoomState = info?.zoomState?.value
+//            val maxZoomRatio = info.zoomState.value
+//            val minZoomRatio = info.getMinZoomRatio().value
+//            val linearZoom = info.getLinearZoom().value
+            Log.d(TAG, "TT4 ${zoomState.toString()}")
+//            Toast.makeText(requireActivity(), zoomState.toString(), Toast.LENGTH_SHORT).show()
+//            camera?.cameraControl?.setZoomRatio(Storage.zoom)
+            camera?.cameraControl?.setLinearZoom(1.0F)
 
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
         } catch(exc: Exception) {
@@ -318,7 +328,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val horizontalAngle = getAngle((TARGET_HORIZONTAL - it.cx).absoluteValue)
+            val horizontalAngle = getAngle((Storage.targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
                 it.cx < 0.5 -> LEFT
                 it.cx > 0.5 -> RIGHT
@@ -334,7 +344,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 }
             }
 
-            val verticalAngle = getAngle((TARGET_VERTICAL - it.cy).absoluteValue)
+            val verticalAngle = getAngle((Storage.targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
                 it.cy < 0.5 -> TOP
                 it.cy > 0.5 -> BOTTOM
