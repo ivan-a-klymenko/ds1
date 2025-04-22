@@ -275,6 +275,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 preview,
                 imageAnalyzer
             )
+            camera?.cameraControl?.setZoomRatio(3.0F)
 
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
         } catch(exc: Exception) {
