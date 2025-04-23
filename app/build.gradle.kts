@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "tech.ai_robotics.drone_shooter_2"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "tech.ai_robotics.drone_shooter_2"
-        minSdk = 26
+        minSdk = 30
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

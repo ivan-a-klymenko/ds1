@@ -3,10 +3,13 @@ package tech.ai_robotics.drone_shooter_2.ui.common
 import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 
 object CameraDiagnostics {
 
+    @RequiresApi(Build.VERSION_CODES.P)
     fun logAllCameraInfo(context: Context) {
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val cameraIdList = cameraManager.cameraIdList
