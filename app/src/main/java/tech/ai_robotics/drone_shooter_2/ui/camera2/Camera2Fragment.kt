@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
+import tech.ai_robotics.drone_shooter_2.ui.common.CameraDiagnostics
 import tech.ai_robotics.drone_shooter_2.ui.common.ImageUtils
 import java.util.concurrent.Executors
 
@@ -89,7 +90,7 @@ class Camera2Fragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        detector = Detector(requireContext(), "model.tflite", "labels.txt", object : Detector.DetectorListener {
+        detector = Detector(requireContext(), "spot_3x_10x_20x.tflite", "labels.txt", object : Detector.DetectorListener {
             override fun onEmptyDetect() { Log.d("Detector", "No objects detected") }
             override fun onDetect(boundingBoxes: List<tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox>, inferenceTime: Long) {
                 Log.d("Detector", "Detection in $inferenceTime ms, boxes: ${boundingBoxes.size}")
@@ -100,7 +101,7 @@ class Camera2Fragment : Fragment() {
         cameraIdList = cameraManager.cameraIdList.filter {
             cameraManager.getCameraCharacteristics(it).get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
         }
-        logAvailableCameras()
+        CameraDiagnostics.logAllCameraInfo(requireContext())
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 openCameraByIndex(currentCameraIndex)

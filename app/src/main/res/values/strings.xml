@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">DroneShooter2</string>
     <string name="title_home">Home</string>
+    <string name="title_camera2">Camera2</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 
