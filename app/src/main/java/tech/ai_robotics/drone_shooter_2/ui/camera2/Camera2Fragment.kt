@@ -1,4 +1,4 @@
-// Camera2-based Fragment with camera switching, zoom control, and UI
+// Camera2-based Fragment with layout from XML and camera switch button
 package tech.ai_robotics.drone_shooter_2.ui.camera2
 
 import android.annotation.SuppressLint
@@ -17,24 +17,25 @@ import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.SurfaceHolder
-import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.SeekBar
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import tech.ai_robotics.drone_shooter_2.databinding.FragmentCamera2Binding
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.common.CameraDiagnostics
 import tech.ai_robotics.drone_shooter_2.ui.common.ImageUtils
 import java.util.concurrent.Executors
 
 class Camera2Fragment : Fragment() {
+
+    private var _binding: FragmentCamera2Binding? = null
+    private val binding get() = _binding!!
 
     private lateinit var cameraManager: CameraManager
     private var cameraDevice: CameraDevice? = null
@@ -44,11 +45,6 @@ class Camera2Fragment : Fragment() {
     private lateinit var imageReader: ImageReader
     private lateinit var imageReaderHandlerThread: HandlerThread
     private lateinit var imageReaderHandler: Handler
-
-    private lateinit var surfaceView: SurfaceView
-    private lateinit var zoomSeekBar: SeekBar
-    private lateinit var zoomLabel: TextView
-    private lateinit var cameraLabel: TextView
 
     private lateinit var detector: Detector
     private var currentCameraId: String? = null
@@ -65,27 +61,8 @@ class Camera2Fragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        val rootLayout = FrameLayout(requireContext())
-        surfaceView = SurfaceView(requireContext())
-        zoomSeekBar = SeekBar(requireContext())
-        zoomLabel = TextView(requireContext())
-        cameraLabel = TextView(requireContext())
-
-        zoomSeekBar.max = 100
-        zoomSeekBar.progress = 100
-        zoomLabel.text = "Zoom: 1.0x"
-        cameraLabel.text = "Camera: -"
-
-        zoomSeekBar.translationY = 50f
-        zoomLabel.translationY = 100f
-        cameraLabel.translationY = 150f
-
-        rootLayout.addView(surfaceView)
-        rootLayout.addView(zoomSeekBar)
-        rootLayout.addView(zoomLabel)
-        rootLayout.addView(cameraLabel)
-
-        return rootLayout
+        _binding = FragmentCamera2Binding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -102,7 +79,7 @@ class Camera2Fragment : Fragment() {
             cameraManager.getCameraCharacteristics(it).get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
         }
         CameraDiagnostics.logAllCameraInfo(requireContext())
-        surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
+        binding.surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 openCameraByIndex(currentCameraIndex)
             }
@@ -112,17 +89,23 @@ class Camera2Fragment : Fragment() {
             }
         })
 
-        surfaceView.setOnClickListener {
+        binding.btnSwitchCamera.setOnClickListener {
             currentCameraIndex = (currentCameraIndex + 1) % cameraIdList.size
             closeCamera()
             openCameraByIndex(currentCameraIndex)
         }
 
-        zoomSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.zoomSeekBar.max = 100
+        binding.zoomSeekBar.progress = 100
+        val layoutParams = binding.zoomSeekBar.layoutParams as ViewGroup.MarginLayoutParams
+        layoutParams.bottomMargin += 48
+        binding.zoomSeekBar.layoutParams = layoutParams
+
+        binding.zoomSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val ratio = 1f + (maxZoom - 1f) * (progress / 100f)
                 currentZoom = ratio
-                zoomLabel.text = "Zoom: %.1fx".format(ratio)
+                binding.zoomLabel.text = "Zoom: %.1fx".format(ratio)
                 updateZoom()
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -130,19 +113,10 @@ class Camera2Fragment : Fragment() {
         })
     }
 
-    private fun logAvailableCameras() {
-        for (id in cameraManager.cameraIdList) {
-            val characteristics = cameraManager.getCameraCharacteristics(id)
-            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-            val zoom = characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
-            Log.d("Camera2", "CameraId: $id, Facing: $facing, MaxZoom: $zoom")
-        }
-    }
-
     private fun openCameraByIndex(index: Int) {
         if (index in cameraIdList.indices) {
             currentCameraId = cameraIdList[index]
-            cameraLabel.text = "Camera: $currentCameraId"
+            binding.cameraLabel.text = "Camera: $currentCameraId"
             openCamera(cameraIdList[index])
         }
     }
@@ -178,7 +152,7 @@ class Camera2Fragment : Fragment() {
     }
 
     private fun startPreview() {
-        val surface = surfaceView.holder.surface
+        val surface = binding.surfaceView.holder.surface
         previewRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
             addTarget(surface)
             addTarget(imageReader.surface)
@@ -219,5 +193,6 @@ class Camera2Fragment : Fragment() {
         detector.clear()
         coroutineScope.cancel()
         cameraExecutor.shutdown()
+        _binding = null
     }
 }
