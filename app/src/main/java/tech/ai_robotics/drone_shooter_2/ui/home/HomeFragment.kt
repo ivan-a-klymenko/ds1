@@ -49,11 +49,12 @@ import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MODEL_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.BOTTOM
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.LEFT
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.TOP
 import tech.ai_robotics.drone_shooter_2.ui.common.Storage
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.util.ArrayDeque
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -525,9 +526,3 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 }
 
-enum class Direction(val commandValue: String){
-    LEFT("L"),
-    RIGHT("R"),
-    TOP("T"),
-    BOTTOM("B");
-}

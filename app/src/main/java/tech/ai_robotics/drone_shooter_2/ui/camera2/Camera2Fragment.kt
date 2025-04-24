@@ -1,4 +1,4 @@
-// Camera2-based Fragment with layout from XML and camera switch button
+// Camera2-based Fragment with detection logic from HomeFragment
 package tech.ai_robotics.drone_shooter_2.ui.camera2
 
 import android.annotation.SuppressLint
@@ -26,11 +26,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import tech.ai_robotics.drone_shooter_2.bluetooth.Connected
+import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService
+import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentCamera2Binding
+import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.common.CameraDiagnostics
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.BOTTOM
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.LEFT
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.common.Direction.TOP
 import tech.ai_robotics.drone_shooter_2.ui.common.ImageUtils
+import tech.ai_robotics.drone_shooter_2.ui.common.Storage
 import java.util.concurrent.Executors
+import kotlin.math.absoluteValue
+
+private const val TAG = "Camera2Fragment"
 
 class Camera2Fragment : Fragment() {
 
@@ -58,6 +71,14 @@ class Camera2Fragment : Fragment() {
     private val cameraExecutor = Executors.newFixedThreadPool(processorCount)
     private val coroutineScope = CoroutineScope(Dispatchers.Default.limitedParallelism(processorCount))
 
+    private var hCommand: Direction? = null
+    private var vCommand: Direction? = null
+
+    private var connected = Connected.FALSE
+    private val hexEnabled: Boolean = false
+    private val newline = TextUtil.newline_crlf
+    private var service: SerialService? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -68,9 +89,28 @@ class Camera2Fragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         detector = Detector(requireContext(), "spot_3x_10x_20x.tflite", "labels.txt", object : Detector.DetectorListener {
-            override fun onEmptyDetect() { Log.d("Detector", "No objects detected") }
-            override fun onDetect(boundingBoxes: List<tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox>, inferenceTime: Long) {
-                Log.d("Detector", "Detection in $inferenceTime ms, boxes: ${boundingBoxes.size}")
+            override fun onEmptyDetect() {
+//                coroutineScope.launch(Dispatchers.Main) {
+//                    hCommand = null
+//                    vCommand = null
+//                    binding.overlayView.clear()
+//                }
+            }
+            override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
+                requireActivity().runOnUiThread {
+                    if (hCommand == null || vCommand == null) {
+                        boundingBoxes.forEachIndexed { index, it ->
+                            Log.d("TTT onDetect", "hCommand $hCommand vCommand $vCommand")
+                            Log.d("TTT onDetect", "$index $it")
+                        }
+                    }
+                    handleDetectedObject(boundingBoxes)
+//                    binding.inferenceTime.text = "${inferenceTime}ms"
+                    binding.overlayView.apply {
+                        setResults(boundingBoxes)
+                        invalidate()
+                    }
+                }
             }
         })
         detector.setup()
@@ -111,6 +151,54 @@ class Camera2Fragment : Fragment() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+    }
+
+    private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
+        val box = boundingBoxes.minByOrNull {
+            it.cx
+        }
+        box?.let {
+            val horizontalAngle = getAngle((Storage.targetHorizontal - it.cx).absoluteValue)
+            val horizontalDirection = when  {
+                it.cx < 0.5 -> LEFT
+                it.cx > 0.5 -> RIGHT
+                else -> null
+            }
+            horizontalAngle?.let { angle ->
+                horizontalDirection?.let { direction ->
+                    val horizontalCommand = "${direction.commandValue} $angle"
+                    if (hCommand == null && connected == Connected.TRUE) {
+                        hCommand = horizontalDirection
+                        send(horizontalCommand)
+                    }
+                }
+            }
+
+            val verticalAngle = getAngle((Storage.targetVertical - it.cy).absoluteValue)
+            val verticalDirection = when  {
+                it.cy < 0.5 -> TOP
+                it.cy > 0.5 -> BOTTOM
+                else -> null
+            }
+            verticalAngle?.let { angle ->
+                verticalDirection?.let { direction ->
+                    val verticaCommand = "${direction.commandValue} $angle"
+                    if (vCommand == null && connected == Connected.TRUE) {
+                        vCommand = verticalDirection
+                        send(verticaCommand)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getAngle(diff: Double): Int? {
+        return when {
+            diff in 0.3..0.5 -> 10
+            diff in 0.15..0.3 -> 5
+            diff in 0.05..0.15 -> 1
+            else -> null
+        }
     }
 
     private fun openCameraByIndex(index: Int) {
@@ -194,5 +282,38 @@ class Camera2Fragment : Fragment() {
         coroutineScope.cancel()
         cameraExecutor.shutdown()
         _binding = null
+    }
+
+    private fun send(str: String) {
+        Log.d("$TAG TTT", "send: $str")
+//        if (connected != Connected.TRUE) {
+//            Toast.makeText(activity, "not connected", Toast.LENGTH_SHORT).show()
+//            return
+//        }
+//        try {
+//            val msg: String
+//            val data: ByteArray
+//            if (hexEnabled) {
+//                val sb = StringBuilder()
+//                TextUtil.toHexString(sb, TextUtil.fromHexString(str))
+//                TextUtil.toHexString(sb, newline.toByteArray())
+//                msg = sb.toString()
+//                data = TextUtil.fromHexString(msg)
+//            } else {
+//                msg = str
+//                data = (str + newline).toByteArray()
+//            }
+//            val spn = SpannableStringBuilder(msg + '\n')
+//            spn.setSpan(
+//                ForegroundColorSpan(resources.getColor(R.color.colorSendText)),
+//                0,
+//                spn.length,
+//                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+//            )
+////            receiveText.append(spn)
+//            service!!.write(data)
+//        } catch (e: java.lang.Exception) {
+//            onSerialIoError(e)
+//        }
     }
 }
