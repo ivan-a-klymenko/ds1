@@ -34,14 +34,8 @@ import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.common.CameraDiagnostics
 import tech.ai_robotics.drone_shooter_2.ui.common.Direction
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.BOTTOM
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.LEFT
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.RIGHT
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.TOP
 import tech.ai_robotics.drone_shooter_2.ui.common.ImageUtils
-import tech.ai_robotics.drone_shooter_2.ui.common.Storage
 import java.util.concurrent.Executors
-import kotlin.math.absoluteValue
 
 private const val TAG = "Camera2Fragment"
 
@@ -157,39 +151,39 @@ class Camera2Fragment : Fragment() {
         val box = boundingBoxes.minByOrNull {
             it.cx
         }
-        box?.let {
-            val horizontalAngle = getAngle((Storage.targetHorizontal - it.cx).absoluteValue)
-            val horizontalDirection = when  {
-                it.cx < 0.5 -> LEFT
-                it.cx > 0.5 -> RIGHT
-                else -> null
-            }
-            horizontalAngle?.let { angle ->
-                horizontalDirection?.let { direction ->
-                    val horizontalCommand = "${direction.commandValue} $angle"
-                    if (hCommand == null && connected == Connected.TRUE) {
-                        hCommand = horizontalDirection
-                        send(horizontalCommand)
-                    }
-                }
-            }
-
-            val verticalAngle = getAngle((Storage.targetVertical - it.cy).absoluteValue)
-            val verticalDirection = when  {
-                it.cy < 0.5 -> TOP
-                it.cy > 0.5 -> BOTTOM
-                else -> null
-            }
-            verticalAngle?.let { angle ->
-                verticalDirection?.let { direction ->
-                    val verticaCommand = "${direction.commandValue} $angle"
-                    if (vCommand == null && connected == Connected.TRUE) {
-                        vCommand = verticalDirection
-                        send(verticaCommand)
-                    }
-                }
-            }
-        }
+//        box?.let {
+//            val horizontalAngle = getAngle((Storage.targetHorizontal - it.cx).absoluteValue)
+//            val horizontalDirection = when  {
+//                it.cx < 0.5 -> LEFT
+//                it.cx > 0.5 -> RIGHT
+//                else -> null
+//            }
+//            horizontalAngle?.let { angle ->
+//                horizontalDirection?.let { direction ->
+//                    val horizontalCommand = "${direction.commandValue} $angle"
+//                    if (hCommand == null && connected == Connected.TRUE) {
+//                        hCommand = horizontalDirection
+//                        send(horizontalCommand)
+//                    }
+//                }
+//            }
+//
+//            val verticalAngle = getAngle((Storage.targetVertical - it.cy).absoluteValue)
+//            val verticalDirection = when  {
+//                it.cy < 0.5 -> TOP
+//                it.cy > 0.5 -> BOTTOM
+//                else -> null
+//            }
+//            verticalAngle?.let { angle ->
+//                verticalDirection?.let { direction ->
+//                    val verticaCommand = "${direction.commandValue} $angle"
+//                    if (vCommand == null && connected == Connected.TRUE) {
+//                        vCommand = verticalDirection
+//                        send(verticaCommand)
+//                    }
+//                }
+//            }
+//        }
     }
 
     private fun getAngle(diff: Double): Int? {

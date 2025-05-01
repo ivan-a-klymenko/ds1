@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothServerSocket
+import android.bluetooth.BluetoothSocket
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -11,6 +13,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.text.Editable
@@ -23,9 +26,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
-import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -34,6 +37,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.bluetooth.BluetoothStorage
 import tech.ai_robotics.drone_shooter_2.bluetooth.Connected.FALSE
@@ -49,13 +55,15 @@ import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MODEL_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.BOTTOM
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.LEFT
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.RIGHT
-import tech.ai_robotics.drone_shooter_2.ui.common.Direction.TOP
-import tech.ai_robotics.drone_shooter_2.ui.common.Storage
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.util.ArrayDeque
+import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.absoluteValue
@@ -72,7 +80,9 @@ private const val T_50 = "T 50"
 private const val B_50 = "B 50"
 private const val DONE = "MOVE"
 
-private const val STOP_DELAY = 500L
+private const val ZOOM = "zoom"
+private const val TARGET_HORIZONTAL = "target_horizontal"
+private const val TARGET_VERTICAL = "target_vertical"
 
 class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, ServiceConnection {
 
@@ -99,6 +109,22 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //    private val commandSet = mutableSetOf<String>()
     private var hCommand: Direction? = null
     private var vCommand: Direction? = null
+
+    private var serverThread: Thread? = null
+    private var running = true
+
+    private var zoom = 3.0F
+    private var targetHorizontal = 0.49
+    private var targetVertical = 0.47
+
+    private val bluetoothServerPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                startBluetoothServer()
+            } else {
+                Toast.makeText(requireContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     override fun onAttach(activity: Activity) {
         super.onAttach(activity)
@@ -139,6 +165,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         return root
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
@@ -154,6 +181,13 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             btBottom.setOnClickListener {
                 send(B_50)
             }
+        }
+
+        val permission = Manifest.permission.BLUETOOTH_CONNECT
+        if (ContextCompat.checkSelfPermission(requireContext(), permission) != PackageManager.PERMISSION_GRANTED) {
+            bluetoothServerPermissionLauncher.launch(permission)
+        } else {
+            startBluetoothServer()
         }
     }
 
@@ -189,6 +223,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        stopBluetoothServer()
     }
 
     override fun onDestroy() {
@@ -214,7 +249,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    @SuppressLint("RestrictedApi")
     private fun bindCameraUseCases() {
         val cameraProvider = cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
 
@@ -277,17 +311,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 preview,
                 imageAnalyzer
             )
-
-            val info: CameraInfo? = camera?.cameraInfo
-            val zoomState = info?.zoomState?.value
-//            val maxZoomRatio = info.zoomState.value
-//            val minZoomRatio = info.getMinZoomRatio().value
-//            val linearZoom = info.getLinearZoom().value
-            Log.d(TAG, "TT4 ${zoomState.toString()}")
-//            Toast.makeText(requireActivity(), zoomState.toString(), Toast.LENGTH_SHORT).show()
-//            camera?.cameraControl?.setZoomRatio(Storage.zoom)
-            camera?.cameraControl?.setZoomRatio(Storage.zoom)
-
+            camera?.cameraControl?.setZoomRatio(zoom)
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
         } catch(exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
@@ -329,7 +353,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val horizontalAngle = getAngle((Storage.targetHorizontal - it.cx).absoluteValue)
+            val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
                 it.cx < 0.5 -> LEFT
                 it.cx > 0.5 -> RIGHT
@@ -345,7 +369,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 }
             }
 
-            val verticalAngle = getAngle((Storage.targetVertical - it.cy).absoluteValue)
+            val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
                 it.cy < 0.5 -> TOP
                 it.cy > 0.5 -> BOTTOM
@@ -524,5 +548,83 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             onSerialIoError(e)
         }
     }
+
+    @SuppressLint("MissingPermission")
+    private fun startBluetoothServer() {
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+        serverThread = Thread {
+            var serverSocket: BluetoothServerSocket? = null
+            try {
+                serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("BT_APP", uuid)
+                Log.d("BTServer", "Waiting for connection...")
+
+                while (running) {
+                    val socket = serverSocket.accept()
+                    Log.d("BTServer", "Client connected: ${socket.remoteDevice.name}")
+                    handleClient(socket)
+                }
+            } catch (e: IOException) {
+                Log.e("BTServer", "Server error: ${e.message}")
+            } finally {
+                try {
+                    serverSocket?.close()
+                } catch (_: IOException) {}
+            }
+        }
+        serverThread?.start()
+    }
+
+    private fun stopBluetoothServer() {
+        running = false
+        serverThread?.interrupt()
+    }
+
+    private fun handleClient(socket: BluetoothSocket) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val reader = BufferedReader(InputStreamReader(socket.inputStream))
+                var line: String?
+                while (running && socket.isConnected) {
+                    line = reader.readLine()
+                    if (line == null) break
+                    Log.d("BTServer", "Received: $line")
+                    onCommandReceived(line)
+                }
+            } catch (e: IOException) {
+                Log.e("BTServer", "Read error: ${e.message}")
+            } finally {
+                try {
+                    socket.close()
+                } catch (_: IOException) {}
+            }
+        }
+    }
+
+    private fun onCommandReceived(command: String) {
+        when {
+            command.contains(ZOOM) -> {
+                zoom = command.substringAfterLast(" ").toFloatOrNull() ?: 1.0F
+                camera?.cameraControl?.setZoomRatio(zoom)
+            }
+            command.contains(TARGET_VERTICAL) -> {
+                targetVertical = command.substringAfterLast(" ").toDoubleOrNull() ?: 0.5
+            }
+            command.contains(TARGET_HORIZONTAL) -> {
+                targetHorizontal = command.substringAfterLast(" ").toDoubleOrNull() ?: 0.5
+            }
+        }
+        requireActivity().runOnUiThread {
+            Toast.makeText(requireContext(), "BTServer received command: $command", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 }
 
+enum class Direction(val commandValue: String){
+    LEFT("L"),
+    RIGHT("R"),
+    TOP("T"),
+    BOTTOM("B");
+}
