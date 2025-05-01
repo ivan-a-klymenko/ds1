@@ -286,7 +286,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             Log.d(TAG, "TT4 ${zoomState.toString()}")
 //            Toast.makeText(requireActivity(), zoomState.toString(), Toast.LENGTH_SHORT).show()
 //            camera?.cameraControl?.setZoomRatio(Storage.zoom)
-            camera?.cameraControl?.setLinearZoom(1.0F)
+            camera?.cameraControl?.setZoomRatio(Storage.zoom)
 
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
         } catch(exc: Exception) {
