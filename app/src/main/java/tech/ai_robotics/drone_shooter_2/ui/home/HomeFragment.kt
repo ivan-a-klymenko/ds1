@@ -355,8 +355,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         box?.let {
             val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
-                it.cx < 0.5 -> LEFT
-                it.cx > 0.5 -> RIGHT
+                it.cx < 0.5 -> RIGHT
+                it.cx > 0.5 -> LEFT
                 else -> null
             }
             horizontalAngle?.let { angle ->
@@ -371,8 +371,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
             val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
-                it.cy < 0.5 -> TOP
-                it.cy > 0.5 -> BOTTOM
+                it.cy < 0.5 -> BOTTOM
+                it.cy > 0.5 -> TOP
                 else -> null
             }
             verticalAngle?.let { angle ->
@@ -388,7 +388,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun getAngle(diff: Double): Int? {
-        Log.d(TAG, "getAngle diff: $diff")
+        Log.d("$TAG TT1", "getAngle diff: $diff")
         return when {
             diff in 0.3..0.5 -> 10
             0.15 < diff && diff < 0.3 -> 5
@@ -517,7 +517,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun send(str: String) {
-        Log.d("$TAG TTT", "send: $str")
+        Log.d("$TAG TT1", "send: $str")
         if (connected != TRUE) {
             Toast.makeText(activity, "not connected", Toast.LENGTH_SHORT).show()
             return
