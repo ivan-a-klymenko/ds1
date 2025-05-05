@@ -365,8 +365,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         box?.let {
             val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
-                it.cx < 0.5 -> RIGHT
-                it.cx > 0.5 -> LEFT
+                it.cx < targetHorizontal -> RIGHT
+                it.cx > targetHorizontal -> LEFT
                 else -> null
             }
             horizontalAngle?.let { angle ->
@@ -381,8 +381,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
             val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
-                it.cy < 0.5 -> BOTTOM
-                it.cy > 0.5 -> TOP
+                it.cy < targetVertical -> BOTTOM
+                it.cy > targetVertical -> TOP
                 else -> null
             }
             verticalAngle?.let { angle ->
