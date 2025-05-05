@@ -171,6 +171,16 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         with(binding) {
             btLeft.setOnClickListener {
                 send(L_50)
+//                handleDetectedObject(listOf(
+//                    Правый верхний
+//                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
+//                    Левый верхний
+//                    BoundingBox(cx = 0.16135767F, cy = 0.110087246F),
+//                    Левый нижний
+//                    BoundingBox(cx = 0.16701841F, cy = 0.8193228F),
+//                    Правый нижний
+//                    BoundingBox(cx = 0.84539664F, cy = 0.81635725F)
+//                ))
             }
             btRight.setOnClickListener {
                 send(R_50)
@@ -391,8 +401,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         Log.d("$TAG TT1", "getAngle diff: $diff")
         return when {
             diff in 0.3..0.5 -> 10
-            0.15 < diff && diff < 0.3 -> 5
-            diff in 0.05..0.15 -> 1
+            0.15 < diff && diff < 0.3 -> 10
+            diff in 0.05..0.15 -> 10
             else -> null
         }
     }
