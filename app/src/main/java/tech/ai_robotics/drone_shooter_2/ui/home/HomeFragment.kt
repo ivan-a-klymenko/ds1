@@ -113,9 +113,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var serverThread: Thread? = null
     private var running = true
 
-    private var zoom = 3.0F
-    private var targetHorizontal = 0.49
-    private var targetVertical = 0.47
+    private var zoom = 8.0F
+    private var targetHorizontal = 0.5
+    private var targetVertical = 0.5
 
     private val bluetoothServerPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -342,12 +342,13 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
+        Log.d("TTT onDetect", "hCommand $hCommand vCommand $vCommand")
+        boundingBoxes.forEachIndexed { index, it ->
+            Log.d("TTT onDetect", "$index $it")
+        }
         requireActivity().runOnUiThread {
             if (hCommand == null || vCommand == null) {
-                boundingBoxes.forEachIndexed { index, it ->
-                    Log.d("TTT onDetect", "hCommand $hCommand vCommand $vCommand")
-                    Log.d("TTT onDetect", "$index $it")
-                }
+
             }
             handleDetectedObject(boundingBoxes)
             binding.inferenceTime.text = "${inferenceTime}ms"
@@ -365,8 +366,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         box?.let {
             val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
-                it.cx < targetHorizontal -> RIGHT
-                it.cx > targetHorizontal -> LEFT
+                it.cx < targetHorizontal -> LEFT
+                it.cx > targetHorizontal -> RIGHT
                 else -> null
             }
             horizontalAngle?.let { angle ->
@@ -381,8 +382,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
             val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
-                it.cy < targetVertical -> BOTTOM
-                it.cy > targetVertical -> TOP
+                it.cy < targetVertical -> TOP
+                it.cy > targetVertical -> BOTTOM
                 else -> null
             }
             verticalAngle?.let { angle ->
@@ -398,11 +399,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun getAngle(diff: Double): Int? {
-        Log.d("$TAG TT1", "getAngle diff: $diff")
+//        Log.d("$TAG TT1", "getAngle diff: $diff")
         return when {
-            diff in 0.3..0.5 -> 10
-            0.15 < diff && diff < 0.3 -> 10
-            diff in 0.05..0.15 -> 10
+            diff in 0.3..0.5 -> 1
+            0.15 < diff && diff < 0.3 -> 1
+            diff in 0.05..0.15 -> 1
             else -> null
         }
     }
@@ -635,6 +636,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 enum class Direction(val commandValue: String){
     LEFT("L"),
     RIGHT("R"),
-    TOP("T"),
-    BOTTOM("B");
+    TOP("B"),
+    BOTTOM("T");
 }

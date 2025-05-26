@@ -16,5 +16,7 @@
     <color name="colorSendText">#82CAFF</color>
     <color name="colorStatusText">#FFDB58</color>
 
+    <color name="colorAim">#F2A859</color>
+
     <color name="bounding_box_color">#234567</color>
 </resources>

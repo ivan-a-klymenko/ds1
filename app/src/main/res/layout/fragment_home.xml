@@ -91,5 +91,26 @@
         app:layout_constraintStart_toEndOf="@+id/bt_top"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <View
+        android:id="@+id/aim_vertical"
+        android:layout_width="2dp"
+        android:layout_height="0dp"
+        android:background="@color/bounding_box_color"
+        app:layout_constraintTop_toTopOf="@+id/view_finder"
+        app:layout_constraintBottom_toBottomOf="@+id/view_finder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <View
+        android:id="@+id/aim_horizontal"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@color/bounding_box_color"
+        app:layout_constraintTop_toTopOf="@+id/view_finder"
+        app:layout_constraintBottom_toBottomOf="@+id/view_finder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
