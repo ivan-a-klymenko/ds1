@@ -80,6 +80,9 @@ private const val T_50 = "T 50"
 private const val B_50 = "B 50"
 private const val DONE = "MOVE"
 
+private const val HORIZONTAL = "H"
+private const val VERTICAL = "V"
+
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
 private const val TARGET_VERTICAL = "target_vertical"
@@ -113,7 +116,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var serverThread: Thread? = null
     private var running = true
 
-    private var zoom = 8.0F
+    private var zoom = 5.0F
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
@@ -364,7 +367,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue)
+            val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue, HORIZONTAL)
             val horizontalDirection = when  {
                 it.cx < targetHorizontal -> LEFT
                 it.cx > targetHorizontal -> RIGHT
@@ -380,7 +383,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 }
             }
 
-            val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue)
+            val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue, VERTICAL)
             val verticalDirection = when  {
                 it.cy < targetVertical -> TOP
                 it.cy > targetVertical -> BOTTOM
@@ -398,12 +401,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
     }
 
-    private fun getAngle(diff: Double): Int? {
-//        Log.d("$TAG TT1", "getAngle diff: $diff")
+    private fun getAngle(diff: Double, direction: String): Int? {
+        Log.d("$TAG TT1", "$direction getAngle diff: $diff")
         return when {
-            diff in 0.3..0.5 -> 1
-            0.15 < diff && diff < 0.3 -> 1
-            diff in 0.05..0.15 -> 1
+            diff in 0.3..0.5 -> 10
+            0.1 < diff && diff < 0.3 -> 5
+            diff in 0.02..0.1 -> 1
             else -> null
         }
     }
@@ -483,7 +486,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             vCommand = null
         }
         Log.d("$TAG TTT", "receive finishedCommand: $finishedCommand ")
-        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
+//        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
     }
 
     private fun status(str: String) {
