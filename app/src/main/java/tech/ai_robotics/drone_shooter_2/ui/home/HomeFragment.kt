@@ -75,7 +75,7 @@ private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
 private const val L_50 = "L 100"
-private const val R_50 = "R 100"
+private const val R_50 = "R 50"
 private const val T_50 = "T 50"
 private const val B_50 = "B 50"
 private const val DONE = "MOVE"
@@ -367,7 +367,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val horizontalAngle = getAngle((targetHorizontal - it.cx).absoluteValue, HORIZONTAL)
+            val horizontalAngle = getHorizontalAngle((targetHorizontal - it.cx).absoluteValue)
             val horizontalDirection = when  {
                 it.cx < targetHorizontal -> LEFT
                 it.cx > targetHorizontal -> RIGHT
@@ -378,12 +378,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     val horizontalCommand = "${direction.commandValue} $angle"
                     if (hCommand == null && connected == TRUE) {
                         hCommand = horizontalDirection
-                        send(horizontalCommand)
+//                        send(horizontalCommand)
                     }
                 }
             }
 
-            val verticalAngle = getAngle((targetVertical - it.cy).absoluteValue, VERTICAL)
+            val verticalAngle = getVerticalAngle((targetVertical - it.cy).absoluteValue)
             val verticalDirection = when  {
                 it.cy < targetVertical -> TOP
                 it.cy > targetVertical -> BOTTOM
@@ -394,18 +394,28 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     val verticaCommand = "${direction.commandValue} $angle"
                     if (vCommand == null && connected == TRUE) {
                         vCommand = verticalDirection
-                        send(verticaCommand)
+//                        send(verticaCommand)
                     }
                 }
             }
         }
     }
 
-    private fun getAngle(diff: Double, direction: String): Int? {
-        Log.d("$TAG TT1", "$direction getAngle diff: $diff")
+    private fun getVerticalAngle(diff: Double): Int? {
+        Log.d("$TAG TT2", "Vertical getAngle diff: $diff")
         return when {
-            diff in 0.3..0.5 -> 10
-            0.1 < diff && diff < 0.3 -> 5
+            diff in 0.3..0.5 -> 2
+            0.1 < diff && diff < 0.3 -> 2
+            diff in 0.02..0.1 -> 1
+            else -> null
+        }
+    }
+
+    private fun getHorizontalAngle(diff: Double): Int? {
+        Log.d("$TAG TT2", "Horizontal getAngle diff: $diff")
+        return when {
+            diff in 0.35..0.5 -> 25
+            0.1 < diff && diff < 0.3 -> 2
             diff in 0.02..0.1 -> 1
             else -> null
         }
@@ -485,7 +495,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         if (finishedCommand.contains(TOP.commandValue) || finishedCommand.contains(BOTTOM.commandValue)){
             vCommand = null
         }
-        Log.d("$TAG TTT", "receive finishedCommand: $finishedCommand ")
+        Log.d("$TAG TT2", "receive finishedCommand: $finishedCommand ")
 //        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
     }
 
@@ -531,7 +541,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun send(str: String) {
-        Log.d("$TAG TT1", "send: $str")
+        Log.d("$TAG TT2", "send: $str")
         if (connected != TRUE) {
             Toast.makeText(activity, "not connected", Toast.LENGTH_SHORT).show()
             return
