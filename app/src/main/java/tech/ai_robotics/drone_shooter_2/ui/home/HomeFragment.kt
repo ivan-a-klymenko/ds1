@@ -74,8 +74,8 @@ private const val HORIZONTAL_LEFT = "xx"
 private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
-private const val L_50 = "L 100"
-private const val R_50 = "R 50"
+private const val L_50 = "L 15"
+private const val R_50 = "R 25"
 private const val T_50 = "T 50"
 private const val B_50 = "B 50"
 private const val DONE = "MOVE"
@@ -378,7 +378,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     val horizontalCommand = "${direction.commandValue} $angle"
                     if (hCommand == null && connected == TRUE) {
                         hCommand = horizontalDirection
-//                        send(horizontalCommand)
+                        send(horizontalCommand)
                     }
                 }
             }
@@ -394,7 +394,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     val verticaCommand = "${direction.commandValue} $angle"
                     if (vCommand == null && connected == TRUE) {
                         vCommand = verticalDirection
-//                        send(verticaCommand)
+                        send(verticaCommand)
                     }
                 }
             }
@@ -415,8 +415,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         Log.d("$TAG TT2", "Horizontal getAngle diff: $diff")
         return when {
             diff in 0.35..0.5 -> 25
-            0.1 < diff && diff < 0.3 -> 2
-            diff in 0.02..0.1 -> 1
+            0.2 < diff && diff < 0.35 -> 15
+            diff in 0.02..0.1 -> 5
             else -> null
         }
     }
