@@ -392,10 +392,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             verticalAngle?.let { angle ->
                 verticalDirection?.let { direction ->
                     val verticaCommand = "${direction.commandValue} $angle"
-//                    if (vCommand == null && connected == TRUE) {
-//                        vCommand = verticalDirection
-//                        send(verticaCommand)
-//                    }
+                    if (vCommand == null && connected == TRUE) {
+                        vCommand = verticalDirection
+                        send(verticaCommand)
+                    }
                 }
             }
         }
@@ -404,8 +404,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun getVerticalAngle(diff: Double): Int? {
         Log.d("$TAG TT2", "Vertical getAngle diff: $diff")
         return when {
-            diff in 0.3..0.5 -> 2
-            0.1 < diff && diff < 0.3 -> 2
+            diff in 0.35..0.5 -> 10
+            0.2 < diff && diff < 0.35 -> 5
+            0.1 < diff && diff <= 0.2 -> 2
             diff in 0.02..0.1 -> 1
             else -> null
         }
@@ -618,7 +619,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     onCommandReceived(line)
                 }
             } catch (e: IOException) {
-                Log.e("BTServer", "Read error: ${e.message}")
+                 Log.e("BTServer", "Read error: ${e.message}")
             } finally {
                 try {
                     socket.close()
