@@ -39,6 +39,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.bluetooth.BluetoothStorage
@@ -74,10 +77,10 @@ private const val HORIZONTAL_LEFT = "xx"
 private const val HORIZONTAL_RIGHT = "kk"
 private const val VERTICAL_TOP = "ff"
 private const val VERTICAL_BOTTOM = "dd"
-private const val L_50 = "L 15"
-private const val R_50 = "R 25"
-private const val T_50 = "T 50"
-private const val B_50 = "B 50"
+private const val L_50 = "L 200"
+private const val R_50 = "R 200"
+private const val T_50 = "T 200"
+private const val B_50 = "B 200"
 private const val DONE = "MOVE"
 
 private const val HORIZONTAL = "H"
@@ -119,6 +122,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var zoom = 5.0F
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
+
+    private val scope = CoroutineScope(Dispatchers.Default)
 
     private val bluetoothServerPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -213,6 +218,22 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     SerialService::class.java
                 )
             )
+        startPeriodicClear()
+    }
+
+    private fun startPeriodicClear() {
+        scope.launch {
+            while (isActive) {
+                clearDirections()
+                delay(2000) // 2 секунды
+            }
+        }
+    }
+
+    private fun clearDirections() {
+        hCommand = null
+        vCommand = null
+        Log.d(TAG, "Очистка выполнена в потоке: ${Thread.currentThread().name}")
     }
 
     override fun onResume() {
@@ -231,6 +252,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onStop() {
         if (service != null && !requireActivity().isChangingConfigurations) service?.detach()
         super.onStop()
+        scope.cancel()
     }
 
     override fun onDestroyView() {
@@ -649,8 +671,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 }
 
 enum class Direction(val commandValue: String){
-    LEFT("L"),
-    RIGHT("R"),
+    LEFT("R"),
+    RIGHT("L"),
     TOP("B"),
     BOTTOM("T");
 }
