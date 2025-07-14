@@ -439,7 +439,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
             0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
             0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
-            diffAbsoluteValue in 0.02..0.05 -> 5
+            diffAbsoluteValue in TARGET_DIFF..0.05 -> 5
             else -> null
         }
     }
@@ -454,7 +454,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
             0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
             0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
-            diffAbsoluteValue in 0.02..0.05 -> 5
+            diffAbsoluteValue in TARGET_DIFF..0.05 -> 5
             else -> null
         }
     }
