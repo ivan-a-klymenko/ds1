@@ -27,6 +27,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -39,9 +40,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.bluetooth.BluetoothStorage
@@ -62,6 +60,7 @@ import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_X
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_Y
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.io.BufferedReader
 import java.io.IOException
@@ -86,6 +85,8 @@ private const val DONE = "MOVE"
 
 private const val HORIZONTAL = "H"
 private const val VERTICAL = "V"
+
+const val TARGET_DIFF = 0.02
 
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
@@ -124,7 +125,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
-    private val scope = CoroutineScope(Dispatchers.Default)
+//    private val scope = CoroutineScope(Dispatchers.Default)
 
     private val bluetoothServerPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -219,21 +220,25 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     SerialService::class.java
                 )
             )
-        startPeriodicClear()
     }
 
-    private fun startPeriodicClear() {
-        scope.launch {
-            while (isActive) {
-                clearDirections()
-                delay(2000) // 2 секунды
-            }
+//    private fun startPeriodicClear() {
+//        scope.launch {
+//            while (isActive) {
+//                withContext(Dispatchers.Main) {
+//                    clearTexts()
+//                }
+//                delay(800)
+//            }
+//        }
+//    }
+
+    private fun clearTexts() {
+        with(binding) {
+            vDiff.text = null
+            hDiff.text = null
+            overlay.clear()
         }
-    }
-
-    private fun clearDirections() {
-        hCommand = null
-        vCommand = null
         Log.d(TAG, "Очистка выполнена в потоке: ${Thread.currentThread().name}")
     }
 
@@ -253,7 +258,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onStop() {
         if (service != null && !requireActivity().isChangingConfigurations) service?.detach()
         super.onStop()
-        scope.cancel()
+//        scope.cancel()
     }
 
     override fun onDestroyView() {
@@ -390,62 +395,73 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            val horizontalAngle = getHorizontalAngle((targetHorizontal - it.cx).absoluteValue)
+            val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
             val horizontalDirection = when  {
-                it.cx < targetHorizontal -> LEFT
-                it.cx > targetHorizontal -> RIGHT
-                else -> null
+                it.cx < targetHorizontal - TARGET_DIFF -> RIGHT
+                it.cx > targetHorizontal + TARGET_DIFF -> LEFT
+                else -> STOP_X
             }
             horizontalAngle?.let { angle ->
-                horizontalDirection?.let { direction ->
+                horizontalDirection.let { direction ->
                     val horizontalCommand = "${direction.commandValue} $angle"
-                    if (hCommand == null && connected == TRUE) {
-                        hCommand = horizontalDirection
+                    if (connected == TRUE) {
                         send(horizontalCommand)
                     }
                 }
             }
 
-            val verticalAngle = getVerticalAngle((targetVertical - it.cy).absoluteValue)
+            val verticalAngle = getVerticalAngle(targetVertical - it.cy)
             val verticalDirection = when  {
-                it.cy < targetVertical -> TOP
-                it.cy > targetVertical -> BOTTOM
-                else -> null
+                it.cy < targetVertical - TARGET_DIFF -> TOP
+                it.cy > targetVertical - TARGET_DIFF -> BOTTOM
+                else -> STOP_Y
             }
             verticalAngle?.let { angle ->
-                verticalDirection?.let { direction ->
+                verticalDirection.let { direction ->
                     val verticaCommand = "${direction.commandValue} $angle"
-                    if (vCommand == null && connected == TRUE) {
-                        vCommand = verticalDirection
+                    if (connected == TRUE) {
                         send(verticaCommand)
                     }
                 }
             }
         }
+//        startPeriodicClear()
+//        Log.d(TAG + " TT12", "$clearTextsJob clearTextsJob?.start()")
     }
 
     private fun getVerticalAngle(diff: Double): Int? {
+        binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
+        showDiffColor(diff, binding.vDiff)
         Log.d("$TAG TT2", "Vertical getAngle diff: $diff")
+        val diffAbsoluteValue = diff.absoluteValue
         return when {
-            diff in 0.35..0.5 -> 100
-            0.2 < diff && diff < 0.35 -> 30
-            0.1 < diff && diff <= 0.2 -> 10
-            0.05 < diff && diff <= 0.1 -> 5
-            diff in 0.02..0.05 -> 5
+            diffAbsoluteValue in 0.35..0.5 -> 100
+            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
+            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
+            0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
+            diffAbsoluteValue in 0.02..0.05 -> 5
             else -> null
         }
     }
 
     private fun getHorizontalAngle(diff: Double): Int? {
+        binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
+        showDiffColor(diff, binding.hDiff)
         Log.d("$TAG TT2", "Horizontal getAngle diff: $diff")
+        val diffAbsoluteValue = diff.absoluteValue
         return when {
-            diff in 0.35..0.5 -> 100
-            0.2 < diff && diff < 0.35 -> 30
-            0.1 < diff && diff <= 0.2 -> 10
-            0.05 < diff && diff <= 0.1 -> 5
-            diff in 0.02..0.05 -> 5
+            diffAbsoluteValue in 0.35..0.5 -> 100
+            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
+            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
+            0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
+            diffAbsoluteValue in 0.02..0.05 -> 5
             else -> null
         }
+    }
+
+    private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
+        val colorId = if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
+        textView.setTextColor(resources.getColor(colorId))
     }
 
     private fun disconnect() {
@@ -674,8 +690,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 }
 
 enum class Direction(val commandValue: String){
-    LEFT("R"),
-    RIGHT("L"),
+    LEFT("L"),
+    RIGHT("R"),
     TOP("T"),
     BOTTOM("B"),
     STOP_Y("Y"),
