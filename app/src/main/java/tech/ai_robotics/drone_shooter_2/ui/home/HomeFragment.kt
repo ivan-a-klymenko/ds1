@@ -56,11 +56,12 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
-import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MODEL_PATH
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_X
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.io.BufferedReader
 import java.io.IOException
@@ -158,7 +159,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), MODEL_PATH, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD6_LANTERN_OPPOSITE_2025_07_12, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -178,7 +179,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send(L_50)
+                send("${LEFT.commandValue} 4200")
 //                handleDetectedObject(listOf(
 //                    Правый верхний
 //                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
@@ -191,13 +192,13 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //                ))
             }
             btRight.setOnClickListener {
-                send(R_50)
+                send("${RIGHT.commandValue} 2800")
             }
             btTop.setOnClickListener {
-                send(T_50)
+                send(STOP_X.commandValue)
             }
             btBottom.setOnClickListener {
-                send(B_50)
+                send(STOP_X.commandValue)
             }
         }
 
@@ -426,10 +427,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun getVerticalAngle(diff: Double): Int? {
         Log.d("$TAG TT2", "Vertical getAngle diff: $diff")
         return when {
-            diff in 0.35..0.5 -> 10
-            0.2 < diff && diff < 0.35 -> 5
-            0.1 < diff && diff <= 0.2 -> 2
-            diff in 0.02..0.1 -> 1
+            diff in 0.35..0.5 -> 100
+            0.2 < diff && diff < 0.35 -> 30
+            0.1 < diff && diff <= 0.2 -> 10
+            0.05 < diff && diff <= 0.1 -> 5
+            diff in 0.02..0.05 -> 5
             else -> null
         }
     }
@@ -437,10 +439,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun getHorizontalAngle(diff: Double): Int? {
         Log.d("$TAG TT2", "Horizontal getAngle diff: $diff")
         return when {
-            diff in 0.35..0.5 -> 10
-            0.2 < diff && diff < 0.35 -> 5
-            0.1 < diff && diff <= 0.2 -> 2
-            diff in 0.02..0.1 -> 1
+            diff in 0.35..0.5 -> 100
+            0.2 < diff && diff < 0.35 -> 30
+            0.1 < diff && diff <= 0.2 -> 10
+            0.05 < diff && diff <= 0.1 -> 5
+            diff in 0.02..0.05 -> 5
             else -> null
         }
     }
@@ -673,6 +676,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 enum class Direction(val commandValue: String){
     LEFT("R"),
     RIGHT("L"),
-    TOP("B"),
-    BOTTOM("T");
+    TOP("T"),
+    BOTTOM("B"),
+    STOP_Y("Y"),
+    STOP_X("X");
 }
