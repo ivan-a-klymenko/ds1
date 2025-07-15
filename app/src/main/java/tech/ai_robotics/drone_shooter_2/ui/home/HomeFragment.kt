@@ -72,19 +72,8 @@ import java.util.concurrent.Executors
 import kotlin.math.absoluteValue
 
 private const val TAG = "HomeFragment"
-private const val STOP = "pp"
-private const val HORIZONTAL_LEFT = "xx"
-private const val HORIZONTAL_RIGHT = "kk"
-private const val VERTICAL_TOP = "ff"
-private const val VERTICAL_BOTTOM = "dd"
-private const val L_50 = "L 200"
-private const val R_50 = "R 200"
-private const val T_50 = "T 200"
-private const val B_50 = "B 200"
-private const val DONE = "MOVE"
-
-private const val HORIZONTAL = "H"
-private const val VERTICAL = "V"
+private const val H_DONE = "H_DONE"
+private const val V_DONE = "V_DONE"
 
 const val TARGET_DIFF = 0.02
 
@@ -115,8 +104,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private lateinit var cameraExecutor: ExecutorService
 
 //    private val commandSet = mutableSetOf<String>()
-    private var hCommand: Direction? = null
-    private var vCommand: Direction? = null
+    private var hCommandEnable: Boolean = true
+    private var vCommandEnable: Boolean = true
 
     private var serverThread: Thread? = null
     private var running = true
@@ -180,7 +169,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 250")
+                send("${LEFT.commandValue} 2500")
 //                handleDetectedObject(listOf(
 //                    Правый верхний
 //                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
@@ -193,7 +182,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //                ))
             }
             btRight.setOnClickListener {
-                send("${RIGHT.commandValue} 100")
+                send("${RIGHT.commandValue} 3600")
             }
             btTop.setOnClickListener {
                 send(STOP_X.commandValue)
@@ -373,14 +362,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
-        Log.d("TTT onDetect", "hCommand $hCommand vCommand $vCommand")
         boundingBoxes.forEachIndexed { index, it ->
             Log.d("TTT onDetect", "$index $it")
         }
         requireActivity().runOnUiThread {
-            if (hCommand == null || vCommand == null) {
-
-            }
             handleDetectedObject(boundingBoxes)
             binding.inferenceTime.text = "${inferenceTime}ms"
             binding.overlay.apply {
@@ -405,7 +390,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             horizontalAngle?.let { angle ->
                 horizontalDirection.let { direction ->
                     val horizontalCommand = "${direction.commandValue} $angle"
-                    if (connected == TRUE) {
+                    if (connected == TRUE && hCommandEnable) {
+                        hCommandEnable = false
                         send(horizontalCommand)
                     }
                 }
@@ -420,7 +406,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             verticalAngle?.let { angle ->
                 verticalDirection.let { direction ->
                     val verticaCommand = "${direction.commandValue} $angle"
-                    if (connected == TRUE) {
+                    if (connected == TRUE && vCommandEnable) {
+                        vCommandEnable = false
                         send(verticaCommand)
                     }
                 }
@@ -529,11 +516,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             }
         }
         val finishedCommand = spn.toString()
-        if (finishedCommand.contains(LEFT.commandValue) || finishedCommand.contains(RIGHT.commandValue)){
-            hCommand = null
+        if (finishedCommand.contains(H_DONE)){
+            hCommandEnable = true
         }
-        if (finishedCommand.contains(TOP.commandValue) || finishedCommand.contains(BOTTOM.commandValue)){
-            vCommand = null
+        if (finishedCommand.contains(V_DONE)){
+            vCommandEnable = true
         }
         Log.d("$TAG TT2", "receive finishedCommand: $finishedCommand ")
 //        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
