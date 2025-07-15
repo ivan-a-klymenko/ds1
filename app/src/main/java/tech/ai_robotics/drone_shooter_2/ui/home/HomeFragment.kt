@@ -180,7 +180,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 4200")
+                send("${LEFT.commandValue} 250")
 //                handleDetectedObject(listOf(
 //                    Правый верхний
 //                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
@@ -193,7 +193,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //                ))
             }
             btRight.setOnClickListener {
-                send("${RIGHT.commandValue} 2800")
+                send("${RIGHT.commandValue} 100")
             }
             btTop.setOnClickListener {
                 send(STOP_X.commandValue)
@@ -394,6 +394,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         val box = boundingBoxes.minByOrNull {
             it.cx
         }
+        Log.d("$TAG TT3", "cx: ${box?.cx} cy: ${box?.cy}")
         box?.let {
             val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
             val horizontalDirection = when  {
@@ -425,14 +426,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 }
             }
         }
-//        startPeriodicClear()
-//        Log.d(TAG + " TT12", "$clearTextsJob clearTextsJob?.start()")
     }
 
     private fun getVerticalAngle(diff: Double): Int? {
         binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
         showDiffColor(diff, binding.vDiff)
-        Log.d("$TAG TT2", "Vertical getAngle diff: $diff")
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.35..0.5 -> 100
@@ -447,7 +445,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun getHorizontalAngle(diff: Double): Int? {
         binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
         showDiffColor(diff, binding.hDiff)
-        Log.d("$TAG TT2", "Horizontal getAngle diff: $diff")
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.35..0.5 -> 100
