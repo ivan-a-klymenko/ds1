@@ -103,10 +103,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
     private lateinit var cameraExecutor: ExecutorService
 
-//    private val commandSet = mutableSetOf<String>()
-    private var hCommandEnable: Boolean = true
-    private var vCommandEnable: Boolean = true
-
     private var serverThread: Thread? = null
     private var running = true
 
@@ -379,7 +375,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         val box = boundingBoxes.minByOrNull {
             it.cx
         }
-        Log.d("$TAG TT3", "cx: ${box?.cx} cy: ${box?.cy}")
         box?.let {
             val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
             val horizontalDirection = when  {
@@ -387,14 +382,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 it.cx > targetHorizontal + TARGET_DIFF -> LEFT
                 else -> STOP_X
             }
-            horizontalAngle?.let { angle ->
-                horizontalDirection.let { direction ->
-                    val horizontalCommand = "${direction.commandValue} $angle"
-                    if (connected == TRUE && hCommandEnable) {
-                        hCommandEnable = false
-                        send(horizontalCommand)
-                    }
-                }
+            val horizontalCommand = "${horizontalDirection.commandValue} $horizontalAngle"
+            Log.d("$TAG TT3", "cx: ${box.cx} cy: ${box.cy} horizontalCommand: $horizontalCommand")
+            if (connected == TRUE) {
+                send(horizontalCommand)
             }
 
             val verticalAngle = getVerticalAngle(targetVertical - it.cy)
@@ -406,8 +397,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             verticalAngle?.let { angle ->
                 verticalDirection.let { direction ->
                     val verticaCommand = "${direction.commandValue} $angle"
-                    if (connected == TRUE && vCommandEnable) {
-                        vCommandEnable = false
+                    if (connected == TRUE) {
                         send(verticaCommand)
                     }
                 }
@@ -429,17 +419,22 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
     }
 
-    private fun getHorizontalAngle(diff: Double): Int? {
+    private fun getHorizontalAngle(diff: Double): Int {
         binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
         showDiffColor(diff, binding.hDiff)
         val diffAbsoluteValue = diff.absoluteValue
         return when {
-            diffAbsoluteValue in 0.35..0.5 -> 100
-            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
-            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
+            diffAbsoluteValue in 0.45..0.5 -> 170
+            0.4 < diffAbsoluteValue && diffAbsoluteValue < 0.45 -> 140
+            diffAbsoluteValue in 0.35..0.4 -> 120
+            0.3 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 100
+            diffAbsoluteValue in 0.25..0.3 -> 80
+            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.25 -> 50
+            diffAbsoluteValue in 0.15..0.2 -> 30
+            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.15 -> 10
             0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
             diffAbsoluteValue in TARGET_DIFF..0.05 -> 5
-            else -> null
+            else -> 0
         }
     }
 
@@ -516,14 +511,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             }
         }
         val finishedCommand = spn.toString()
-        if (finishedCommand.contains(H_DONE)){
-            hCommandEnable = true
-        }
-        if (finishedCommand.contains(V_DONE)){
-            vCommandEnable = true
-        }
         Log.d("$TAG TT2", "receive finishedCommand: $finishedCommand ")
-//        Log.d("$TAG TTT", "receive hCommand: $hCommand vCommand $vCommand")
     }
 
     private fun status(str: String) {
