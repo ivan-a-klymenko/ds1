@@ -384,9 +384,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             }
             val horizontalCommand = "${horizontalDirection.commandValue} $horizontalAngle"
             Log.d("$TAG TT3", "cx: ${box.cx} cy: ${box.cy} horizontalCommand: $horizontalCommand")
-            if (connected == TRUE) {
-                send(horizontalCommand)
-            }
+//            if (connected == TRUE) {
+//                send(horizontalCommand)
+//            }
 
             val verticalAngle = getVerticalAngle(targetVertical - it.cy)
             val verticalDirection = when  {
@@ -394,13 +394,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 it.cy > targetVertical - TARGET_DIFF -> BOTTOM
                 else -> STOP_Y
             }
-            verticalAngle?.let { angle ->
-                verticalDirection.let { direction ->
-                    val verticaCommand = "${direction.commandValue} $angle"
-                    if (connected == TRUE) {
-                        send(verticaCommand)
-                    }
-                }
+            val verticaCommand = "${verticalDirection.commandValue} $verticalAngle"
+            if (connected == TRUE) {
+                send(verticaCommand)
             }
         }
     }
