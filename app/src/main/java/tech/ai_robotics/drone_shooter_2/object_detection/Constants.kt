@@ -12,6 +12,7 @@ object Constants {
     const val OD4_MAVIC_P_V2 = "od4_mavic_p_v2.tflite"
 //    Navic на аэродроме на фоне неба 50 - 150 м
     const val OD5_DETECTOR_MAVIC_V1 = "od5_detector_mavic_v1.tflite"
+    const val OD5_2_MAVIC_AERODROM = "od5_2_mavic_aerodrom.tflite"
     const val LABELS_PATH = "labels.txt"
 }
 
