@@ -20,14 +20,15 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
+import tech.ai_robotics.drone_shooter_2.MainActivity;
 import tech.ai_robotics.drone_shooter_2.R;
-import tech.ai_robotics.drone_shooter_2.ui.terminal.TerminalFragment;
 
 public class DevicesFragment extends ListFragment {
 
@@ -140,8 +141,13 @@ public class DevicesFragment extends ListFragment {
         BluetoothDevice device = listItems.get(position-1);
         Bundle args = new Bundle();
         args.putString("device", device.getAddress());
-        Fragment fragment = new TerminalFragment();
-        fragment.setArguments(args);
-        getParentFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
+        BluetoothStorage.INSTANCE.setBluetoothDeviceId(device.getAddress());
+        if (getActivity() instanceof MainActivity) {
+            BottomNavigationView bottomNavigation = getActivity().findViewById(R.id.nav_view);
+            bottomNavigation.setSelectedItemId(R.id.navigation_home);
+        }
+//        Fragment fragment = new TerminalFragment();
+//        fragment.setArguments(args);
+//        getParentFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
     }
 }

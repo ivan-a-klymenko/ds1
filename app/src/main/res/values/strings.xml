@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">DroneShooter2</string>
     <string name="title_home">Home</string>
+    <string name="title_camera2">Camera2</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 
@@ -8,4 +9,15 @@
     <string name="bluetooth_permission_grant">Bluetooth permission is required by this App. Please grant in next dialog.</string>
     <string name="bluetooth_permission_denied">Bluetooth permission was permanently denied. You have to enable permission \"%s\" in App settings.</string>
     <string name="devices">Bluetooth Devices</string>
+    <string name="button_right">R</string>
+    <string name="button_left">L</string>
+    <string name="button_top">T</string>
+    <string name="button_bottom">B</string>
+    <string name="zoom">Zoom</string>
+    <string name="set_zoom">Set Zoom</string>
+    <string name="set_target_horizontal">Set Target Horizontal</string>
+    <string name="target_horizontal">Target Horizontal</string>
+    <string name="target_vertical">Target Vertical</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
