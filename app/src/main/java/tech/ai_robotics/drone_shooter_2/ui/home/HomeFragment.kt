@@ -165,7 +165,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 2500")
+                send("${LEFT.commandValue} 30")
 //                handleDetectedObject(listOf(
 //                    Правый верхний
 //                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
@@ -178,13 +178,13 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //                ))
             }
             btRight.setOnClickListener {
-                send("${RIGHT.commandValue} 3600")
+                send("${RIGHT.commandValue} 30")
             }
             btTop.setOnClickListener {
-                send(STOP_X.commandValue)
+                send("${TOP.commandValue} 30")
             }
             btBottom.setOnClickListener {
-                send(STOP_X.commandValue)
+                send("${BOTTOM.commandValue} 30")
             }
         }
 
@@ -395,9 +395,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 else -> STOP_Y
             }
             val verticaCommand = "${verticalDirection.commandValue} $verticalAngle"
-            if (connected == TRUE) {
-                send(verticaCommand)
-            }
+//            if (connected == TRUE) {
+//                send(verticaCommand)
+//            }
         }
     }
 
@@ -507,7 +507,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             }
         }
         val finishedCommand = spn.toString()
-        Log.d("$TAG TT2", "receive finishedCommand: $finishedCommand ")
+        Log.d("$TAG TT3", "receive finishedCommand: $finishedCommand ")
     }
 
     private fun status(str: String) {
@@ -552,7 +552,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun send(str: String) {
-        Log.d("$TAG TT2", "send: $str")
+        Log.d("$TAG TT3", "send: $str")
         if (connected != TRUE) {
             Toast.makeText(activity, "not connected", Toast.LENGTH_SHORT).show()
             return
