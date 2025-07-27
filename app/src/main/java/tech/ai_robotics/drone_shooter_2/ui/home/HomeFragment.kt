@@ -51,10 +51,12 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService
 import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService.SerialBinder
 import tech.ai_robotics.drone_shooter_2.bluetooth.SerialSocket
 import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
+import tech.ai_robotics.drone_shooter_2.common.LimitedSizeList
+import tech.ai_robotics.drone_shooter_2.common.Point
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
-import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -110,6 +112,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
+    private val hPoints: LimitedSizeList<Point> = LimitedSizeList(20)
+    private val vPoints: LimitedSizeList<Point> = LimitedSizeList(20)
+
 //    private val scope = CoroutineScope(Dispatchers.Default)
 
     private val bluetoothServerPermissionLauncher =
@@ -117,7 +122,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             if (granted) {
                 startBluetoothServer()
             } else {
-                Toast.makeText(requireContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Bluetooth permission denied", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 
@@ -145,13 +151,17 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD6_LANTERN_OPPOSITE_2025_07_12, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
             startCamera()
         } else {
-            ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                REQUIRED_PERMISSIONS,
+                REQUEST_CODE_PERMISSIONS
+            )
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -165,20 +175,19 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 30")
-//                handleDetectedObject(listOf(
-//                    Правый верхний
-//                    BoundingBox(cx = 0.83513457F, cy = 0.09034231F),
-//                    Левый верхний
-//                    BoundingBox(cx = 0.16135767F, cy = 0.110087246F),
-//                    Левый нижний
-//                    BoundingBox(cx = 0.16701841F, cy = 0.8193228F),
-//                    Правый нижний
-//                    BoundingBox(cx = 0.84539664F, cy = 0.81635725F)
-//                ))
+                send("${LEFT.commandValue} 40")
+//                [Point(currentTimeMillis=1753541809560, timestamp=2025-07-26 16:56:49.560, value=0.19051203), Point(currentTimeMillis=1753541809911, timestamp=2025-07-26 16:56:49.911, value=0.2154355), Point(currentTimeMillis=1753541810270, timestamp=2025-07-26 16:56:50.270, value=0.23884457), Point(currentTimeMillis=1753541810626, timestamp=2025-07-26 16:56:50.626, value=0.25774214), Point(currentTimeMillis=1753541810985, timestamp=2025-07-26 16:56:50.985, value=0.27731568), Point(currentTimeMillis=1753541811344, timestamp=2025-07-26 16:56:51.344, value=0.29495978), Point(currentTimeMillis=1753541811703, timestamp=2025-07-26 16:56:51.703, value=0.31079403), Point(currentTimeMillis=1753541812054, timestamp=2025-07-26 16:56:52.054, value=0.32402003), Point(currentTimeMillis=1753541812410, timestamp=2025-07-26 16:56:52.410, value=0.34063208), Point(currentTimeMillis=1753541812766, timestamp=2025-07-26 16:56:52.766, value=0.35301858), Point(currentTimeMillis=1753541813119, timestamp=2025-07-26 16:56:53.119, value=0.3632192), Point(currentTimeMillis=1753541813475, timestamp=2025-07-26 16:56:53.475, value=0.37266612), Point(currentTimeMillis=1753541813829, timestamp=2025-07-26 16:56:53.829, value=0.3825984), Point(currentTimeMillis=1753541814175, timestamp=2025-07-26 16:56:54.175, value=0.39111316), Point(currentTimeMillis=1753541814520, timestamp=2025-07-26 16:56:54.520, value=0.39874956), Point(currentTimeMillis=1753541814867, timestamp=2025-07-26 16:56:54.867, value=0.40519813), Point(currentTimeMillis=1753541815219, timestamp=2025-07-26 16:56:55.219, value=0.41288897), Point(currentTimeMillis=1753541815577, timestamp=2025-07-26 16:56:55.577, value=0.41817242), Point(currentTimeMillis=1753541816267, timestamp=2025-07-26 16:56:56.267, value=0.4295407), Point(currentTimeMillis=1753541816616, timestamp=2025-07-26 16:56:56.616, value=0.4352549)]
+//                val points = listOf(
+//                    Point(currentTimeMillis = 1753541809560, value = 0.19051203F),
+//                    Point(currentTimeMillis = 1753541809911, value = 0.2154355F),
+//                    Point(currentTimeMillis = 1753541810270, value = 0.23884457F)
+//                )
+//                val predictValue = predictValue(points, 356)
+//                Log.d("$TAG TT4", "$predictValue")
+
             }
             btRight.setOnClickListener {
-                send("${RIGHT.commandValue} 30")
+                send("${RIGHT.commandValue} 40")
             }
             btTop.setOnClickListener {
                 send("${TOP.commandValue} 30")
@@ -189,7 +198,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
 
         val permission = Manifest.permission.BLUETOOTH_CONNECT
-        if (ContextCompat.checkSelfPermission(requireContext(), permission) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                permission
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             bluetoothServerPermissionLauncher.launch(permission)
         } else {
             startBluetoothServer()
@@ -229,7 +242,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
     override fun onResume() {
         super.onResume()
-        if (allPermissionsGranted()){
+        if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUIRED_PERMISSIONS)
@@ -263,20 +276,22 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onDetach() {
         try {
             requireActivity().unbindService(this)
-        } catch (ignored: java.lang.Exception) {}
+        } catch (ignored: java.lang.Exception) {
+        }
         super.onDetach()
     }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
-            cameraProvider  = cameraProviderFuture.get()
+            cameraProvider = cameraProviderFuture.get()
             bindCameraUseCases()
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     private fun bindCameraUseCases() {
-        val cameraProvider = cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
+        val cameraProvider =
+            cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
 
         val rotation = binding.viewFinder.display.rotation
 
@@ -285,7 +300,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
 
-        preview =  Preview.Builder()
+        preview = Preview.Builder()
             .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .setTargetRotation(rotation)
             .build()
@@ -339,7 +354,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
             camera?.cameraControl?.setZoomRatio(zoom)
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-        } catch(exc: Exception) {
+        } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
     }
@@ -349,8 +364,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()) {
-        if (it[Manifest.permission.CAMERA] == true) { startCamera() }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        if (it[Manifest.permission.CAMERA] == true) {
+            startCamera()
+        }
     }
 
     override fun onEmptyDetect() {
@@ -372,24 +390,41 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
+//        Log.d("$TAG TT3", "boundingBoxes size: ${boundingBoxes.size}")
         val box = boundingBoxes.minByOrNull {
             it.cx
         }
         box?.let {
+            hPoints.add(
+                Point(
+                    currentTimeMillis = System.currentTimeMillis(),
+                    value = it.cx
+                )
+            )
+            vPoints.add(
+                Point(
+                    currentTimeMillis = System.currentTimeMillis(),
+                    value = it.cy
+                )
+            )
             val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
-            val horizontalDirection = when  {
+            val horizontalDirection = when {
                 it.cx < targetHorizontal - TARGET_DIFF -> RIGHT
                 it.cx > targetHorizontal + TARGET_DIFF -> LEFT
                 else -> STOP_X
             }
             val horizontalCommand = "${horizontalDirection.commandValue} $horizontalAngle"
-            Log.d("$TAG TT3", "cx: ${box.cx} cy: ${box.cy} horizontalCommand: $horizontalCommand")
+            Log.d("$TAG TT3", "hSize: ${it.x2 - it.x1}")
+//            Log.d("$TAG TT3", """cx: ${box.cx} cy: ${box.cy} horizontalCommand: $horizontalCommand
+//                |vPoints: $vPoints
+//                |hSize: ${it.y2 - it.y1}
+//            """.trimMargin())
 //            if (connected == TRUE) {
 //                send(horizontalCommand)
 //            }
 
             val verticalAngle = getVerticalAngle(targetVertical - it.cy)
-            val verticalDirection = when  {
+            val verticalDirection = when {
                 it.cy < targetVertical - TARGET_DIFF -> TOP
                 it.cy > targetVertical - TARGET_DIFF -> BOTTOM
                 else -> STOP_Y
@@ -435,7 +470,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
-        val colorId = if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
+        val colorId =
+            if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
         textView.setTextColor(resources.getColor(colorId))
     }
 
@@ -447,7 +483,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     companion object {
         private const val TAG = "Camera"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = mutableListOf (
+        private val REQUIRED_PERMISSIONS = mutableListOf(
             Manifest.permission.CAMERA
         ).toTypedArray()
     }
@@ -605,7 +641,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             } finally {
                 try {
                     serverSocket?.close()
-                } catch (_: IOException) {}
+                } catch (_: IOException) {
+                }
             }
         }
         serverThread?.start()
@@ -628,11 +665,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     onCommandReceived(line)
                 }
             } catch (e: IOException) {
-                 Log.e("BTServer", "Read error: ${e.message}")
+                Log.e("BTServer", "Read error: ${e.message}")
             } finally {
                 try {
                     socket.close()
-                } catch (_: IOException) {}
+                } catch (_: IOException) {
+                }
             }
         }
     }
@@ -643,21 +681,27 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 zoom = command.substringAfterLast(" ").toFloatOrNull() ?: 1.0F
                 camera?.cameraControl?.setZoomRatio(zoom)
             }
+
             command.contains(TARGET_VERTICAL) -> {
                 targetVertical = command.substringAfterLast(" ").toDoubleOrNull() ?: 0.5
             }
+
             command.contains(TARGET_HORIZONTAL) -> {
                 targetHorizontal = command.substringAfterLast(" ").toDoubleOrNull() ?: 0.5
             }
         }
         requireActivity().runOnUiThread {
-            Toast.makeText(requireContext(), "BTServer received command: $command", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "BTServer received command: $command",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
 }
 
-enum class Direction(val commandValue: String){
+enum class Direction(val commandValue: String) {
     LEFT("L"),
     RIGHT("R"),
     TOP("T"),
