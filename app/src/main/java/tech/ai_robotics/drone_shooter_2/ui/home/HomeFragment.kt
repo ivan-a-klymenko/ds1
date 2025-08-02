@@ -60,7 +60,7 @@ import tech.ai_robotics.drone_shooter_2.common.findIntersectionTime
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
-import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -158,7 +158,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD6_LANTERN_OPPOSITE_2025_07_12, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -408,6 +408,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     value = it.cy
                 )
             )
+            setHorizontalDiff(it.cx)
+            setVerticalDiff(it.cy)
 
         }
         if (hPoints.size > 2 && isHorizontalMoveAvailable) {
@@ -416,7 +418,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             Log.d("$TAG TT3", "$isHorizontalMoveAvailable target: $target, vPoints: $vPoints")
             target?.interceptMillis?.let {
                 send("${targetValue?.getVerticalDirection()?.commandValue} ${targetValue?.getVerticalStepsNumber()}")
-                setHorizontalDiff()
+
                 isHorizontalMoveAvailable = false
 //                startUnlockVerticalMovingTimer(it)
             }
@@ -424,20 +426,20 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     @SuppressLint("SetTextI18n")
-    private fun setVerticalDiff(cy: Double) {
+    private fun setVerticalDiff(cy: Float) {
         val diff = cy - 0.5
         binding.vDiff.text = """Vertical Deviation:
-            |${diff.times(-1).toString().substring(0, 10)}
+            |${diff.toString().substring(0, 10)}
         """.trimMargin()
-        showDiffColor(diff, binding.hDiff)
+        showDiffColor(diff, binding.vDiff)
         showTargetColor(diff, binding.aimHorizontal)
     }
 
     @SuppressLint("SetTextI18n")
-    private fun setHorizontalDiff(cx: Double) {
+    private fun setHorizontalDiff(cx: Float) {
         val diff = cx - 0.5
         binding.hDiff.text = """Horizontal Deviation:
-            |${diff.times(-1).toString().substring(0, 10)}
+            |${diff.toString().substring(0, 10)}
         """.trimMargin()
         showDiffColor(diff, binding.hDiff)
         showTargetColor(diff, binding.aimVertical)
