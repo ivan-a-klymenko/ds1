@@ -1,5 +1,7 @@
 package tech.ai_robotics.drone_shooter_2.common
 
+import tech.ai_robotics.drone_shooter_2.ui.home.SPEED
+import tech.ai_robotics.drone_shooter_2.ui.home.TARGET_DIFF
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.LinkedList
@@ -21,6 +23,11 @@ class LimitedSizeList<T>(private val maxSize: Int) : LinkedList<T>() {
 data class Point(
     val currentTimeMillis: Long,
     val timestamp: String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date(currentTimeMillis)),
+    val value: Float
+)
+
+data class Target(
+    val interceptMillis: Long,
     val value: Float
 )
 
@@ -50,6 +57,34 @@ fun predictValue(points: List<Point>, deltaMillis: Long): Float {
     val lastPoint = points.last()
     return lastPoint.value + averageSpeed * deltaMillis
 }
+
+fun findIntersectionTime(
+    points: List<Point>,
+    speed2: Float = SPEED,
+    epsilon: Float = TARGET_DIFF.toFloat(),
+    maxTimeMillis: Long = 60_000L,
+    stepMillis: Long = 10L
+): Target? {
+    val lastTime = points.last().currentTimeMillis
+    val maxSteps = (maxTimeMillis / stepMillis).toInt()
+
+    for (i in 1..maxSteps) {
+        val t = i * stepMillis
+        val predictedValue = predictValue(points, t)
+        val needDistance = speed2 * t
+        val value2 = if (predictedValue > 0.5) 0.5f + needDistance else 0.5f - needDistance
+
+        val abs = kotlin.math.abs(predictedValue - value2)
+//        Log.d("TT3", "value1: $predictedValue value2: $value2 abs: $abs")
+        if (abs < epsilon) {
+            return Target(t, predictedValue)
+        }
+        if (predictedValue > 1) break
+    }
+
+    return null // не нашли за maxTimeMillis
+}
+
 
 
 

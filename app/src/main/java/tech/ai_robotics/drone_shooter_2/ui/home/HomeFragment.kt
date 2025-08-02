@@ -40,7 +40,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.bluetooth.BluetoothStorage
 import tech.ai_robotics.drone_shooter_2.bluetooth.Connected.FALSE
@@ -53,6 +56,7 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.SerialSocket
 import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.common.LimitedSizeList
 import tech.ai_robotics.drone_shooter_2.common.Point
+import tech.ai_robotics.drone_shooter_2.common.findIntersectionTime
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
@@ -61,8 +65,6 @@ import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_X
-import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_Y
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.io.BufferedReader
 import java.io.IOException
@@ -78,6 +80,9 @@ private const val H_DONE = "H_DONE"
 private const val V_DONE = "V_DONE"
 
 const val TARGET_DIFF = 0.02
+const val SPEED = 0.0001F
+const val VERTICAL_RATIO = 1.125
+const val HORIZONTAL_RATIO = 1.125
 
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
@@ -112,10 +117,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
-    private val hPoints: LimitedSizeList<Point> = LimitedSizeList(20)
-    private val vPoints: LimitedSizeList<Point> = LimitedSizeList(20)
+    private val hPoints: LimitedSizeList<Point> = LimitedSizeList(3)
+    private val vPoints: LimitedSizeList<Point> = LimitedSizeList(3)
+    private var isVerticalMoveAvailable: Boolean = true
+    private var isHorizontalMoveAvailable: Boolean = false
 
-//    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.Default)
 
     private val bluetoothServerPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -176,15 +183,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         with(binding) {
             btLeft.setOnClickListener {
                 send("${LEFT.commandValue} 40")
-//                [Point(currentTimeMillis=1753541809560, timestamp=2025-07-26 16:56:49.560, value=0.19051203), Point(currentTimeMillis=1753541809911, timestamp=2025-07-26 16:56:49.911, value=0.2154355), Point(currentTimeMillis=1753541810270, timestamp=2025-07-26 16:56:50.270, value=0.23884457), Point(currentTimeMillis=1753541810626, timestamp=2025-07-26 16:56:50.626, value=0.25774214), Point(currentTimeMillis=1753541810985, timestamp=2025-07-26 16:56:50.985, value=0.27731568), Point(currentTimeMillis=1753541811344, timestamp=2025-07-26 16:56:51.344, value=0.29495978), Point(currentTimeMillis=1753541811703, timestamp=2025-07-26 16:56:51.703, value=0.31079403), Point(currentTimeMillis=1753541812054, timestamp=2025-07-26 16:56:52.054, value=0.32402003), Point(currentTimeMillis=1753541812410, timestamp=2025-07-26 16:56:52.410, value=0.34063208), Point(currentTimeMillis=1753541812766, timestamp=2025-07-26 16:56:52.766, value=0.35301858), Point(currentTimeMillis=1753541813119, timestamp=2025-07-26 16:56:53.119, value=0.3632192), Point(currentTimeMillis=1753541813475, timestamp=2025-07-26 16:56:53.475, value=0.37266612), Point(currentTimeMillis=1753541813829, timestamp=2025-07-26 16:56:53.829, value=0.3825984), Point(currentTimeMillis=1753541814175, timestamp=2025-07-26 16:56:54.175, value=0.39111316), Point(currentTimeMillis=1753541814520, timestamp=2025-07-26 16:56:54.520, value=0.39874956), Point(currentTimeMillis=1753541814867, timestamp=2025-07-26 16:56:54.867, value=0.40519813), Point(currentTimeMillis=1753541815219, timestamp=2025-07-26 16:56:55.219, value=0.41288897), Point(currentTimeMillis=1753541815577, timestamp=2025-07-26 16:56:55.577, value=0.41817242), Point(currentTimeMillis=1753541816267, timestamp=2025-07-26 16:56:56.267, value=0.4295407), Point(currentTimeMillis=1753541816616, timestamp=2025-07-26 16:56:56.616, value=0.4352549)]
-//                val points = listOf(
-//                    Point(currentTimeMillis = 1753541809560, value = 0.19051203F),
-//                    Point(currentTimeMillis = 1753541809911, value = 0.2154355F),
-//                    Point(currentTimeMillis = 1753541810270, value = 0.23884457F)
-//                )
-//                val predictValue = predictValue(points, 356)
-//                Log.d("$TAG TT4", "$predictValue")
-
             }
             btRight.setOnClickListener {
                 send("${RIGHT.commandValue} 40")
@@ -193,7 +191,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 send("${TOP.commandValue} 30")
             }
             btBottom.setOnClickListener {
-                send("${BOTTOM.commandValue} 30")
+                isHorizontalMoveAvailable = true
+//                send("${BOTTOM.commandValue} 30")
+                Log.d("TT3", "btBottom click")
+//                startUnlockVerticalMovingTimer(1000)
             }
         }
 
@@ -220,16 +221,16 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
     }
 
-//    private fun startPeriodicClear() {
-//        scope.launch {
-//            while (isActive) {
-//                withContext(Dispatchers.Main) {
-//                    clearTexts()
-//                }
-//                delay(800)
-//            }
-//        }
-//    }
+    private fun startUnlockVerticalMovingTimer(delayMillis: Long) {
+        scope.launch {
+            delay(delayMillis)
+            withContext(Dispatchers.Main) {
+                hPoints.clear()
+                isHorizontalMoveAvailable = true
+            }
+            Log.d("TT3", "isVerticalMoveAvailable = true in Thread ${Thread.currentThread().name}")
+        }
+    }
 
     private fun clearTexts() {
         with(binding) {
@@ -256,7 +257,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     override fun onStop() {
         if (service != null && !requireActivity().isChangingConfigurations) service?.detach()
         super.onStop()
-//        scope.cancel()
+        scope.cancel()
     }
 
     override fun onDestroyView() {
@@ -390,11 +391,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
-//        Log.d("$TAG TT3", "boundingBoxes size: ${boundingBoxes.size}")
         val box = boundingBoxes.minByOrNull {
             it.cx
         }
         box?.let {
+            Log.d("$TAG TT3", "boundingBoxes size: ${boundingBoxes.size}")
             hPoints.add(
                 Point(
                     currentTimeMillis = System.currentTimeMillis(),
@@ -407,72 +408,51 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                     value = it.cy
                 )
             )
-            val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
-            val horizontalDirection = when {
-                it.cx < targetHorizontal - TARGET_DIFF -> RIGHT
-                it.cx > targetHorizontal + TARGET_DIFF -> LEFT
-                else -> STOP_X
-            }
-            val horizontalCommand = "${horizontalDirection.commandValue} $horizontalAngle"
-            Log.d("$TAG TT3", "hSize: ${it.x2 - it.x1}")
-//            Log.d("$TAG TT3", """cx: ${box.cx} cy: ${box.cy} horizontalCommand: $horizontalCommand
-//                |vPoints: $vPoints
-//                |hSize: ${it.y2 - it.y1}
-//            """.trimMargin())
-//            if (connected == TRUE) {
-//                send(horizontalCommand)
-//            }
 
-            val verticalAngle = getVerticalAngle(targetVertical - it.cy)
-            val verticalDirection = when {
-                it.cy < targetVertical - TARGET_DIFF -> TOP
-                it.cy > targetVertical - TARGET_DIFF -> BOTTOM
-                else -> STOP_Y
+        }
+        if (hPoints.size > 2 && isHorizontalMoveAvailable) {
+            val target = findIntersectionTime(vPoints)
+            val  targetValue = target?.value
+            Log.d("$TAG TT3", "$isHorizontalMoveAvailable target: $target, vPoints: $vPoints")
+            target?.interceptMillis?.let {
+                send("${targetValue?.getVerticalDirection()?.commandValue} ${targetValue?.getVerticalStepsNumber()}")
+                setHorizontalDiff()
+                isHorizontalMoveAvailable = false
+//                startUnlockVerticalMovingTimer(it)
             }
-            val verticaCommand = "${verticalDirection.commandValue} $verticalAngle"
-//            if (connected == TRUE) {
-//                send(verticaCommand)
-//            }
         }
     }
 
-    private fun getVerticalAngle(diff: Double): Int? {
-        binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
-        showDiffColor(diff, binding.vDiff)
-        val diffAbsoluteValue = diff.absoluteValue
-        return when {
-            diffAbsoluteValue in 0.35..0.5 -> 100
-            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 30
-            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.2 -> 10
-            0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
-            diffAbsoluteValue in TARGET_DIFF..0.05 -> 5
-            else -> null
-        }
-    }
-
-    private fun getHorizontalAngle(diff: Double): Int {
-        binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
+    @SuppressLint("SetTextI18n")
+    private fun setVerticalDiff(cy: Double) {
+        val diff = cy - 0.5
+        binding.vDiff.text = """Vertical Deviation:
+            |${diff.times(-1).toString().substring(0, 10)}
+        """.trimMargin()
         showDiffColor(diff, binding.hDiff)
-        val diffAbsoluteValue = diff.absoluteValue
-        return when {
-            diffAbsoluteValue in 0.45..0.5 -> 170
-            0.4 < diffAbsoluteValue && diffAbsoluteValue < 0.45 -> 140
-            diffAbsoluteValue in 0.35..0.4 -> 120
-            0.3 < diffAbsoluteValue && diffAbsoluteValue < 0.35 -> 100
-            diffAbsoluteValue in 0.25..0.3 -> 80
-            0.2 < diffAbsoluteValue && diffAbsoluteValue < 0.25 -> 50
-            diffAbsoluteValue in 0.15..0.2 -> 30
-            0.1 < diffAbsoluteValue && diffAbsoluteValue <= 0.15 -> 10
-            0.05 < diffAbsoluteValue && diffAbsoluteValue <= 0.1 -> 5
-            diffAbsoluteValue in TARGET_DIFF..0.05 -> 5
-            else -> 0
-        }
+        showTargetColor(diff, binding.aimHorizontal)
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun setHorizontalDiff(cx: Double) {
+        val diff = cx - 0.5
+        binding.hDiff.text = """Horizontal Deviation:
+            |${diff.times(-1).toString().substring(0, 10)}
+        """.trimMargin()
+        showDiffColor(diff, binding.hDiff)
+        showTargetColor(diff, binding.aimVertical)
     }
 
     private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
         val colorId =
             if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
         textView.setTextColor(resources.getColor(colorId))
+    }
+
+    private fun showTargetColor(diff: Double, view: View) {
+        val colorId =
+            if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.bounding_box_color
+        view.setBackgroundResource(colorId)
     }
 
     private fun disconnect() {
@@ -709,3 +689,12 @@ enum class Direction(val commandValue: String) {
     STOP_Y("Y"),
     STOP_X("X");
 }
+
+fun Float.getVerticalDirection() =
+    when {
+        this < 0.5 -> TOP
+        else -> BOTTOM
+    }
+
+fun Float.getVerticalStepsNumber() =
+    ((this - 0.5).absoluteValue.times(100).times(VERTICAL_RATIO)).toInt()
