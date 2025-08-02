@@ -71,7 +71,7 @@
         android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/bt_right"
-        app:layout_constraintBottom_toBottomOf="@+id/view_finder"/>
+        app:layout_constraintBottom_toTopOf="@+id/view_finder"/>
 
     <Button
         android:id="@+id/bt_right"
@@ -83,7 +83,7 @@
         android:layout_marginTop="16dp"
         app:layout_constraintEnd_toStartOf="@+id/bt_top"
         app:layout_constraintStart_toEndOf="@+id/bt_left"
-        app:layout_constraintBottom_toBottomOf="@+id/view_finder"/>
+        app:layout_constraintBottom_toTopOf="@+id/view_finder"/>
 
     <Button
         android:id="@+id/bt_top"
@@ -95,7 +95,7 @@
         android:layout_marginTop="16dp"
         app:layout_constraintEnd_toStartOf="@+id/bt_bottom"
         app:layout_constraintStart_toEndOf="@+id/bt_right"
-        app:layout_constraintBottom_toBottomOf="@+id/view_finder"/>
+        app:layout_constraintBottom_toTopOf="@+id/view_finder"/>
 
     <Button
         android:id="@+id/bt_bottom"
@@ -107,7 +107,7 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/bt_top"
-        app:layout_constraintBottom_toBottomOf="@+id/view_finder"/>
+        app:layout_constraintBottom_toTopOf="@+id/view_finder"/>
 
     <View
         android:id="@+id/aim_vertical"
