@@ -54,9 +54,9 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService
 import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService.SerialBinder
 import tech.ai_robotics.drone_shooter_2.bluetooth.SerialSocket
 import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
+import tech.ai_robotics.drone_shooter_2.common.Calculator
+import tech.ai_robotics.drone_shooter_2.common.DetectedPoint
 import tech.ai_robotics.drone_shooter_2.common.LimitedSizeList
-import tech.ai_robotics.drone_shooter_2.common.Point
-import tech.ai_robotics.drone_shooter_2.common.findIntersectionTime
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
@@ -90,6 +90,7 @@ private const val TARGET_VERTICAL = "target_vertical"
 
 class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, ServiceConnection {
 
+    private val calculator: Calculator = Calculator()
     private var initialStart = true
     private val hexEnabled: Boolean = false
     private var pendingNewline = false
@@ -117,10 +118,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
-    private val hPoints: LimitedSizeList<Point> = LimitedSizeList(3)
-    private val vPoints: LimitedSizeList<Point> = LimitedSizeList(3)
-    private var isVerticalMoveAvailable: Boolean = false
-    private var isHorizontalMoveAvailable: Boolean = false
+    private val detectedPoints: LimitedSizeList<DetectedPoint> = LimitedSizeList(3)
+
+    private var isMoveAvailable: Boolean = false
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
@@ -191,10 +191,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 send("${TOP.commandValue} 30")
             }
             btBottom.setOnClickListener {
-                isVerticalMoveAvailable = true
-//                send("${BOTTOM.commandValue} 30")
+                isMoveAvailable = true
                 Log.d("TT3", "btBottom click")
-//                startUnlockVerticalMovingTimer(1000)
             }
         }
 
@@ -221,35 +219,15 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
     }
 
-    private fun startUnlockHorizontalMovingTimer(delayMillis: Long) {
+    private fun startUnlockMovingTimer(delayMillis: Long) {
         scope.launch {
             delay(delayMillis)
             withContext(Dispatchers.Main) {
-                hPoints.clear()
-                isHorizontalMoveAvailable = true
+                detectedPoints.clear()
+                isMoveAvailable = true
             }
-            Log.d("TT3", "isVerticalMoveAvailable = true in Thread ${Thread.currentThread().name}")
+            Log.d("TT3", "isMoveAvailable = true in Thread ${Thread.currentThread().name}")
         }
-    }
-
-    private fun startUnlockVerticalMovingTimer(delayMillis: Long) {
-        scope.launch {
-            delay(delayMillis)
-            withContext(Dispatchers.Main) {
-                vPoints.clear()
-                isVerticalMoveAvailable = true
-            }
-            Log.d("TT3", "isVerticalMoveAvailable = true in Thread ${Thread.currentThread().name}")
-        }
-    }
-
-    private fun clearTexts() {
-        with(binding) {
-            vDiff.text = null
-            hDiff.text = null
-            overlay.clear()
-        }
-        Log.d(TAG, "Очистка выполнена в потоке: ${Thread.currentThread().name}")
     }
 
     override fun onResume() {
@@ -407,40 +385,27 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
         box?.let {
             Log.d("$TAG TT3", boundingBoxes[0].toString())
-            hPoints.add(
-                Point(
+            detectedPoints.add(
+                DetectedPoint(
                     currentTimeMillis = System.currentTimeMillis(),
-                    value = it.cx
-                )
-            )
-            vPoints.add(
-                Point(
-                    currentTimeMillis = System.currentTimeMillis(),
-                    value = it.cy
+                    cx = it.cx,
+                    cy = it.cy
                 )
             )
             setHorizontalDiff(it.cx)
             setVerticalDiff(it.cy)
 
         }
-        if (hPoints.size > 2 && isHorizontalMoveAvailable) {
-            val target = findIntersectionTime(hPoints)
-            val  targetValue = target?.value
-            Log.d("$TAG TT3", "Horizontal $isHorizontalMoveAvailable target: $target, hPoints: $hPoints")
-            target?.interceptMillis?.let {
-                send("${targetValue?.getHorizontalDirection()?.commandValue} ${targetValue?.getHorizontalStepsNumber()}")
-                isHorizontalMoveAvailable = false
-                startUnlockHorizontalMovingTimer(it)
-            }
-        }
-        if (vPoints.size > 2 && isVerticalMoveAvailable) {
-            val target = findIntersectionTime(vPoints)
-            val  targetValue = target?.value
-            Log.d("$TAG TT3", "Vertical $isVerticalMoveAvailable target: $target, vPoints: $vPoints")
-            target?.interceptMillis?.let {
-                send("${targetValue?.getVerticalDirection()?.commandValue} ${targetValue?.getVerticalStepsNumber()}")
-                isVerticalMoveAvailable = false
-//                startUnlockVerticalMovingTimer(it)
+        if (detectedPoints.size > 2 && isMoveAvailable) {
+            val prediction = calculator.calculateMotorCommands(detectedPoints)
+            Log.d("$TAG TT3", """$prediction
+                |$detectedPoints
+            """.trimMargin())
+            prediction?.let {
+                send(it.commands.first)
+                send(it.commands.second)
+                startUnlockMovingTimer(it.finalTime)
+                isMoveAvailable = false
             }
         }
     }
