@@ -81,8 +81,8 @@ private const val V_DONE = "V_DONE"
 
 const val TARGET_DIFF = 0.02
 const val SPEED = 0.0001F
-const val VERTICAL_RATIO = 1.125
-const val HORIZONTAL_RATIO = 1.125
+const val VERTICAL_RATIO = 0.9
+const val HORIZONTAL_RATIO = 0.9
 
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
@@ -119,7 +119,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
     private val hPoints: LimitedSizeList<Point> = LimitedSizeList(3)
     private val vPoints: LimitedSizeList<Point> = LimitedSizeList(3)
-    private var isVerticalMoveAvailable: Boolean = true
+    private var isVerticalMoveAvailable: Boolean = false
     private var isHorizontalMoveAvailable: Boolean = false
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -191,7 +191,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 send("${TOP.commandValue} 30")
             }
             btBottom.setOnClickListener {
-                isHorizontalMoveAvailable = true
+                isVerticalMoveAvailable = true
 //                send("${BOTTOM.commandValue} 30")
                 Log.d("TT3", "btBottom click")
 //                startUnlockVerticalMovingTimer(1000)
@@ -221,12 +221,23 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
     }
 
-    private fun startUnlockVerticalMovingTimer(delayMillis: Long) {
+    private fun startUnlockHorizontalMovingTimer(delayMillis: Long) {
         scope.launch {
             delay(delayMillis)
             withContext(Dispatchers.Main) {
                 hPoints.clear()
                 isHorizontalMoveAvailable = true
+            }
+            Log.d("TT3", "isVerticalMoveAvailable = true in Thread ${Thread.currentThread().name}")
+        }
+    }
+
+    private fun startUnlockVerticalMovingTimer(delayMillis: Long) {
+        scope.launch {
+            delay(delayMillis)
+            withContext(Dispatchers.Main) {
+                vPoints.clear()
+                isVerticalMoveAvailable = true
             }
             Log.d("TT3", "isVerticalMoveAvailable = true in Thread ${Thread.currentThread().name}")
         }
@@ -395,7 +406,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             it.cx
         }
         box?.let {
-            Log.d("$TAG TT3", "boundingBoxes size: ${boundingBoxes.size}")
+            Log.d("$TAG TT3", boundingBoxes[0].toString())
             hPoints.add(
                 Point(
                     currentTimeMillis = System.currentTimeMillis(),
@@ -413,13 +424,22 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 
         }
         if (hPoints.size > 2 && isHorizontalMoveAvailable) {
+            val target = findIntersectionTime(hPoints)
+            val  targetValue = target?.value
+            Log.d("$TAG TT3", "Horizontal $isHorizontalMoveAvailable target: $target, hPoints: $hPoints")
+            target?.interceptMillis?.let {
+                send("${targetValue?.getHorizontalDirection()?.commandValue} ${targetValue?.getHorizontalStepsNumber()}")
+                isHorizontalMoveAvailable = false
+                startUnlockHorizontalMovingTimer(it)
+            }
+        }
+        if (vPoints.size > 2 && isVerticalMoveAvailable) {
             val target = findIntersectionTime(vPoints)
             val  targetValue = target?.value
-            Log.d("$TAG TT3", "$isHorizontalMoveAvailable target: $target, vPoints: $vPoints")
+            Log.d("$TAG TT3", "Vertical $isVerticalMoveAvailable target: $target, vPoints: $vPoints")
             target?.interceptMillis?.let {
                 send("${targetValue?.getVerticalDirection()?.commandValue} ${targetValue?.getVerticalStepsNumber()}")
-
-                isHorizontalMoveAvailable = false
+                isVerticalMoveAvailable = false
 //                startUnlockVerticalMovingTimer(it)
             }
         }
@@ -700,3 +720,12 @@ fun Float.getVerticalDirection() =
 
 fun Float.getVerticalStepsNumber() =
     ((this - 0.5).absoluteValue.times(100).times(VERTICAL_RATIO)).toInt()
+
+fun Float.getHorizontalDirection() =
+    when {
+        this < 0.5 -> LEFT
+        else -> RIGHT
+    }
+
+fun Float.getHorizontalStepsNumber() =
+    ((this - 0.5).absoluteValue.times(100).times(HORIZONTAL_RATIO)).toInt()

@@ -65,7 +65,6 @@ fun findIntersectionTime(
     maxTimeMillis: Long = 60_000L,
     stepMillis: Long = 10L
 ): Target? {
-    val lastTime = points.last().currentTimeMillis
     val maxSteps = (maxTimeMillis / stepMillis).toInt()
 
     for (i in 1..maxSteps) {
@@ -75,7 +74,6 @@ fun findIntersectionTime(
         val value2 = if (predictedValue > 0.5) 0.5f + needDistance else 0.5f - needDistance
 
         val abs = kotlin.math.abs(predictedValue - value2)
-//        Log.d("TT3", "value1: $predictedValue value2: $value2 abs: $abs")
         if (abs < epsilon) {
             return Target(t, predictedValue)
         }
