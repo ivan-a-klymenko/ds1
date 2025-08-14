@@ -54,7 +54,7 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
-import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -145,7 +145,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD6_LANTERN_OPPOSITE_2025_07_12, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -395,15 +395,16 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 else -> STOP_Y
             }
             val verticaCommand = "${verticalDirection.commandValue} $verticalAngle"
-//            if (connected == TRUE) {
-//                send(verticaCommand)
-//            }
+            if (connected == TRUE) {
+                send(verticaCommand)
+            }
         }
     }
 
     private fun getVerticalAngle(diff: Double): Int? {
         binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
         showDiffColor(diff, binding.vDiff)
+        showTargetColor(diff, binding.aimHorizontal)
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.35..0.5 -> 100
@@ -418,6 +419,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun getHorizontalAngle(diff: Double): Int {
         binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
         showDiffColor(diff, binding.hDiff)
+        showTargetColor(diff, binding.aimVertical)
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.45..0.5 -> 170
@@ -437,6 +439,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
         val colorId = if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
         textView.setTextColor(resources.getColor(colorId))
+    }
+
+    private fun showTargetColor(diff: Double, view: View) {
+        val colorId =
+            if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.bounding_box_color
+        view.setBackgroundResource(colorId)
     }
 
     private fun disconnect() {
