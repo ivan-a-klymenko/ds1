@@ -1,6 +1,7 @@
 package tech.ai_robotics.drone_shooter_2.common
 
 import android.util.Log
+import tech.ai_robotics.drone_shooter_2.ui.home.HORIZONTAL_RATIO
 import tech.ai_robotics.drone_shooter_2.ui.home.SPEED
 import tech.ai_robotics.drone_shooter_2.ui.home.TARGET_DIFF
 import tech.ai_robotics.drone_shooter_2.ui.home.VERTICAL_RATIO
@@ -46,8 +47,8 @@ class Calculator {
         Log.d("TT4", "finalTime: $finalTime, targetX: $targetX, targetY: $targetY")
 
         // Рассчитываем команды для моторов
-        val xSteps = calculateSteps(0.5f, targetX)
-        val ySteps = calculateSteps(0.5f, targetY)
+        val xSteps = calculateSteps(0.5f, targetX, HORIZONTAL_RATIO)
+        val ySteps = calculateSteps(0.5f, targetY, VERTICAL_RATIO)
 
         val xCommand = if (targetX > 0.5f) "R $xSteps" else "L $xSteps"
         val yCommand = if (targetY > 0.5f) "B $ySteps" else "T $ySteps"
@@ -103,10 +104,10 @@ class Calculator {
         return lastValue + speed * timeMillis
     }
 
-    private fun calculateSteps(from: Float, to: Float): Int {
+    private fun calculateSteps(from: Float, to: Float, ratio: Double): Int {
         val distance = abs(to - from)
         // Конвертируем расстояние в шаги мотора (зависит от конкретной реализации)
-        return (distance * 100 * VERTICAL_RATIO).toInt()
+        return (distance * 100 * ratio).toInt()
     }
 
     fun checkRun() {

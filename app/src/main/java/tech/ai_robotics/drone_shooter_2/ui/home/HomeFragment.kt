@@ -60,7 +60,7 @@ import tech.ai_robotics.drone_shooter_2.common.LimitedSizeList
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
-import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -79,10 +79,10 @@ private const val TAG = "HomeFragment"
 private const val H_DONE = "H_DONE"
 private const val V_DONE = "V_DONE"
 
-const val TARGET_DIFF = 0.02
+const val TARGET_DIFF = 0.06
 const val SPEED = 0.0001F
-const val VERTICAL_RATIO = 0.9
-const val HORIZONTAL_RATIO = 0.9
+const val VERTICAL_RATIO = 1.2
+const val HORIZONTAL_RATIO = 1.2
 
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
@@ -118,7 +118,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
-    private val detectedPoints: LimitedSizeList<DetectedPoint> = LimitedSizeList(3)
+    private val detectedPoints: LimitedSizeList<DetectedPoint> = LimitedSizeList(5)
 
     private var isMoveAvailable: Boolean = false
 
@@ -158,7 +158,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD6_LANTERN_OPPOSITE_2025_07_12, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -182,7 +182,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 40")
+                send("${LEFT.commandValue} 100")
             }
             btRight.setOnClickListener {
                 send("${RIGHT.commandValue} 40")
