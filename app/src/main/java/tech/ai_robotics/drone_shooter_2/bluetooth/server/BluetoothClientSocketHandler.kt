@@ -14,9 +14,6 @@ import java.io.InputStreamReader
 import java.util.UUID
 
 
-/**
- * @author ivan.klymenko@fuib.com on 01/05/2025
- */
 // Android 1
 class BluetoothClientSocketHandler(
     private val context: Context,

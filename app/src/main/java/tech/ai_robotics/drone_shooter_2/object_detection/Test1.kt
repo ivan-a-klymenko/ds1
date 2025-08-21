@@ -1,8 +1,5 @@
 package tech.ai_robotics.drone_shooter_2.object_detection
 
-/**
- * @author ivan.klymenko@fuib.com on 30/01/2025
- */
 //левый верх
 //0 BoundingBox(x1=0.055731162, y1=0.01798682, x2=0.15635231, y2=0.08204384, cx=0.10604174, cy=0.05001533, w=0.10062115, h=0.06405702, cnf=0.8650919, cls=0, clsName=carsv4)
 //top = 17.267345

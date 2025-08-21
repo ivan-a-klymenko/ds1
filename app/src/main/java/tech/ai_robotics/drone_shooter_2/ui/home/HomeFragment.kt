@@ -56,7 +56,10 @@ import tech.ai_robotics.drone_shooter_2.bluetooth.SerialSocket
 import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.common.Calculator
 import tech.ai_robotics.drone_shooter_2.common.DetectedPoint
+import tech.ai_robotics.drone_shooter_2.common.HORIZONTAL_RATIO
 import tech.ai_robotics.drone_shooter_2.common.LimitedSizeList
+import tech.ai_robotics.drone_shooter_2.common.TARGET_DIFF
+import tech.ai_robotics.drone_shooter_2.common.VERTICAL_RATIO
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
@@ -65,6 +68,8 @@ import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.RIGHT
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.START_FIRE
+import tech.ai_robotics.drone_shooter_2.ui.home.Direction.STOP_FIRE
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.TOP
 import java.io.BufferedReader
 import java.io.IOException
@@ -73,16 +78,12 @@ import java.util.ArrayDeque
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 
 private const val TAG = "HomeFragment"
 private const val H_DONE = "H_DONE"
 private const val V_DONE = "V_DONE"
-
-const val TARGET_DIFF = 0.06
-const val SPEED = 0.0001F
-const val VERTICAL_RATIO = 1.2
-const val HORIZONTAL_RATIO = 1.2
 
 private const val ZOOM = "zoom"
 private const val TARGET_HORIZONTAL = "target_horizontal"
@@ -118,7 +119,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
-    private val detectedPoints: LimitedSizeList<DetectedPoint> = LimitedSizeList(5)
+    private val detectedPoints: LimitedSizeList<DetectedPoint> = LimitedSizeList(3)
 
     private var isMoveAvailable: Boolean = false
 
@@ -182,10 +183,12 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                send("${LEFT.commandValue} 100")
+                fire()
+//                send("${LEFT.commandValue} 100")
             }
             btRight.setOnClickListener {
-                send("${RIGHT.commandValue} 40")
+                send(STOP_FIRE.commandValue)
+//                send("${RIGHT.commandValue} 40")
             }
             btTop.setOnClickListener {
                 send("${TOP.commandValue} 30")
@@ -394,7 +397,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
             setHorizontalDiff(it.cx)
             setVerticalDiff(it.cy)
-
+            handleFire(it)
         }
         if (detectedPoints.size > 2 && isMoveAvailable) {
             val prediction = calculator.calculateMotorCommands(detectedPoints)
@@ -408,6 +411,23 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 isMoveAvailable = false
             }
         }
+    }
+
+    private fun handleFire(boundingBox: BoundingBox) {
+        val xDiff = abs(0.5F - boundingBox.cx)
+        val yDiff = abs(0.5F - boundingBox.cy)
+
+
+    }
+
+    private fun fire() {
+        send("${START_FIRE.commandValue} 100")
+//        scope.launch {
+//            delay(FIRE_TIME)
+//            withContext(Dispatchers.Main) {
+//                send("${STOP_FIRE.commandValue} 100")
+//            }
+//        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -673,6 +693,8 @@ enum class Direction(val commandValue: String) {
     RIGHT("R"),
     TOP("T"),
     BOTTOM("B"),
+    START_FIRE("F"),
+    STOP_FIRE("S"),
     STOP_Y("Y"),
     STOP_X("X");
 }

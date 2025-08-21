@@ -1,15 +1,10 @@
 package tech.ai_robotics.drone_shooter_2.common
 
-import tech.ai_robotics.drone_shooter_2.ui.home.SPEED
-import tech.ai_robotics.drone_shooter_2.ui.home.TARGET_DIFF
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.LinkedList
 import java.util.Locale
 
-/**
- * @author ivan.klymenko@fuib.com on 25/07/2025
- */
 class LimitedSizeList<T>(private val maxSize: Int) : LinkedList<T>() {
 
     override fun add(element: T): Boolean {

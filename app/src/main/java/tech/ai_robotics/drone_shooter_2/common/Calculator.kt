@@ -1,18 +1,12 @@
 package tech.ai_robotics.drone_shooter_2.common
 
 import android.util.Log
-import tech.ai_robotics.drone_shooter_2.ui.home.HORIZONTAL_RATIO
-import tech.ai_robotics.drone_shooter_2.ui.home.SPEED
-import tech.ai_robotics.drone_shooter_2.ui.home.TARGET_DIFF
-import tech.ai_robotics.drone_shooter_2.ui.home.VERTICAL_RATIO
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 
-/**
- * @author ivan.klymenko@fuib.com on 03/08/2025
- */
+
 class Calculator {
 
     fun calculateMotorCommands(
