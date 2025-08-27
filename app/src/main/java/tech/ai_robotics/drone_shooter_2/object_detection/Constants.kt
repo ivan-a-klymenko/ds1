@@ -13,6 +13,8 @@ object Constants {
     const val OD5_2_MAVIC_AERODROM = "od5_2_mavic_aerodrom.tflite"
 //    фонарь напротив, target
     const val OD6_LANTERN_OPPOSITE_2025_07_12 = "od6_lantern_opposite_2025_07_12.tflite"
+//    Mavic на airsoft полигоне
+    const val OD7_2_MAVIC_AIRSOFT_POLIGONO = "od7_2_mavic_airsoft_poligono.tflite"
     const val LABELS_PATH = "labels.txt"
 }
 
