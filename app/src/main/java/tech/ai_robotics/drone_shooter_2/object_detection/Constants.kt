@@ -16,6 +16,9 @@ object Constants {
 //    Mavic на airsoft полигоне
     const val OD7_2_MAVIC_AIRSOFT_POLIGONO = "od7_2_mavic_airsoft_poligono.tflite"
     const val LABELS_PATH = "labels.txt"
+
+    const val MAVIC_50_M = 0.030749321
+    const val MAVIC_100_M = 0.015184432
 }
 
 //if (command == 'L') stepperX.moveTo(stepperX.currentPosition() + steps);
@@ -31,3 +34,7 @@ object Constants {
 //vPoints: [Point(currentTimeMillis=1753541816267, timestamp=2025-07-26 16:56:56.267, value=0.4295407), Point(currentTimeMillis=1753541816616, timestamp=2025-07-26 16:56:56.616, value=0.4352549), Point(currentTimeMillis=1753541817322, timestamp=2025-07-26 16:56:57.322, value=0.444714), Point(currentTimeMillis=1753541838714, timestamp=2025-07-26 16:57:18.714, value=0.34535164), Point(currentTimeMillis=1753541847468, timestamp=2025-07-26 16:57:27.468, value=0.10723275), Point(currentTimeMillis=1753541848180, timestamp=2025-07-26 16:57:28.180, value=0.054986373), Point(currentTimeMillis=1753541848888, timestamp=2025-07-26 16:57:28.888, value=0.011355973), Point(currentTimeMillis=1753541883082, timestamp=2025-07-26 16:58:03.082, value=0.43534064), Point(currentTimeMillis=1753541897290, timestamp=2025-07-26 16:58:17.290, value=0.43103808), Point(currentTimeMillis=1753541897638, timestamp=2025-07-26 16:58:17.638, value=0.41909108), Point(currentTimeMillis=1753541897984, timestamp=2025-07-26 16:58:17.984, value=0.40614653), Point(currentTimeMillis=1753541899053, timestamp=2025-07-26 16:58:19.053, value=0.3556108), Point(currentTimeMillis=1753541899412, timestamp=2025-07-26 16:58:19.412, value=0.33746096), Point(currentTimeMillis=1753541899765, timestamp=2025-07-26 16:58:19.765, value=0.31819683), Point(currentTimeMillis=1753541900994, timestamp=2025-07-26 16:58:20.994, value=0.2577836), Point(currentTimeMillis=1753541901354, timestamp=2025-07-26 16:58:21.354, value=0.23935102), Point(currentTimeMillis=1753541901706, timestamp=2025-07-26 16:58:21.706, value=0.21581194), Point(currentTimeMillis=1753541902406, timestamp=2025-07-26 16:58:22.406, value=0.18320723), Point(currentTimeMillis=1753541902758, timestamp=2025-07-26 16:58:22.758, value=0.16879621), Point(currentTimeMillis=1753541903457, timestamp=2025-07-26 16:58:23.457, value=0.13942017)]
 //50 m: hSize: 0.030749321
 //100 m: hSize: 0.015184432
+
+// Target Drone 30m BoundingBox(x1=0.45806754, y1=0.31265676, x2=0.5012952, y2=0.3292544, cx=0.47968137, cy=0.32095557, w=0.043227702, h=0.016597599, cnf=0.7212552, cls=0, clsName=target)
+// Target Drone 50m BoundingBox(x1=0.33498538, y1=0.26027408, x2=0.36277986, y2=0.27018043, cx=0.34888262, cy=0.26522726, w=0.02779445, h=0.009906352, cnf=0.5165945, cls=0, clsName=target)
+// Target Drone 70m BoundingBox(x1=0.45678878, y1=0.39227393, x2=0.4740448, y2=0.39914712, cx=0.4654168, cy=0.39571053, w=0.017255992, h=0.0068731904, cnf=0.63159806, cls=0, clsName=target)

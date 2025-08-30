@@ -63,7 +63,10 @@ import tech.ai_robotics.drone_shooter_2.common.VERTICAL_RATIO
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MAVIC_100_M
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MAVIC_50_M
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -183,8 +186,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                fire()
-//                send("${LEFT.commandValue} 100")
+//                fire()
+                send("${LEFT.commandValue} 100")
             }
             btRight.setOnClickListener {
                 send(STOP_FIRE.commandValue)
@@ -397,6 +400,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
             )
             setHorizontalDiff(it.cx)
             setVerticalDiff(it.cy)
+            setDistance(it)
             handleFire(it)
         }
         if (detectedPoints.size > 2 && isMoveAvailable) {
@@ -414,9 +418,6 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun handleFire(boundingBox: BoundingBox) {
-        val xDiff = abs(0.5F - boundingBox.cx)
-        val yDiff = abs(0.5F - boundingBox.cy)
-
 
     }
 
@@ -439,6 +440,28 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         showDiffColor(diff, binding.vDiff)
         showTargetColor(diff, binding.aimHorizontal)
     }
+
+    private fun setDistance(bb: BoundingBox) {
+        Log.d("TT4", "$bb")
+        setDistanceColor(bb)
+        val distance = bb.getDistanceText()
+        binding.distance.text = """Distance:
+            |$distance
+        """.trimMargin()
+    }
+
+    private fun setDistanceColor(bb: BoundingBox) {
+        val colorId =
+            if (bb.w > MAVIC_50_M) R.color.colorRecieveText else R.color.colorPrimary
+        binding.distance.setTextColor(resources.getColor(colorId))
+    }
+
+    private fun BoundingBox.getDistanceText() =
+        when{
+            w < MAVIC_100_M -> "> 100m"
+            w >= MAVIC_100_M  && w < MAVIC_50_M -> "50 - 100m"
+            else -> "< 50m"
+        }
 
     @SuppressLint("SetTextI18n")
     private fun setHorizontalDiff(cx: Float) {
