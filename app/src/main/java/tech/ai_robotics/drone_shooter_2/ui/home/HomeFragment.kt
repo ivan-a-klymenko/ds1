@@ -67,6 +67,7 @@ import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MAVIC_100_M
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.MAVIC_50_M
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD6_LANTERN_OPPOSITE_2025_07_12
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD7_2_MAVIC_AIRSOFT_POLIGONO
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -162,7 +163,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
+        detector = Detector(requireContext(), OD7_2_MAVIC_AIRSOFT_POLIGONO, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -187,7 +188,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         with(binding) {
             btLeft.setOnClickListener {
 //                fire()
-                send("${LEFT.commandValue} 100")
+                send("${LEFT.commandValue} 500")
             }
             btRight.setOnClickListener {
                 send(STOP_FIRE.commandValue)
