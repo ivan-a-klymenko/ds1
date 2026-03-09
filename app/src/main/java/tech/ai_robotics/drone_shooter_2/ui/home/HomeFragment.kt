@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -22,6 +21,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
@@ -169,12 +169,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
             .build()
 
         preview =  Preview.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .setTargetRotation(rotation)
             .build()
 
         imageAnalyzer = ImageAnalysis.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setTargetRotation(binding.viewFinder.display.rotation)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
@@ -182,7 +180,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
         imageAnalyzer?.setAnalyzer(cameraExecutor) { imageProxy ->
             val bitmapBuffer =
-                Bitmap.createBitmap(
+                createBitmap(
                     imageProxy.width,
                     imageProxy.height,
                     Bitmap.Config.ARGB_8888
