@@ -55,6 +55,7 @@ import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.OD5_2_MAVIC_AERODROM
+import tech.ai_robotics.drone_shooter_2.object_detection.Constants.SPOT_3X_10X_20X
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.BOTTOM
 import tech.ai_robotics.drone_shooter_2.ui.home.Direction.LEFT
@@ -106,7 +107,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private var serverThread: Thread? = null
     private var running = true
 
-    private var zoom = 5.0F
+    private var zoom = 3.0F
     private var targetHorizontal = 0.5
     private var targetVertical = 0.5
 
@@ -145,7 +146,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
 //            textView.text = it
 //        }
 
-        detector = Detector(requireContext(), OD5_2_MAVIC_AERODROM, LABELS_PATH, this)
+        detector = Detector(requireContext(), SPOT_3X_10X_20X, LABELS_PATH, this)
         detector.setup()
 
         if (allPermissionsGranted()) {
@@ -240,7 +241,19 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        // Stop camera when fragment is paused
+        cameraProvider?.unbindAll()
+        camera = null
+        preview = null
+        imageAnalyzer = null
+    }
+
     override fun onStop() {
+        // Stop Bluetooth server when fragment is stopped
+        stopBluetoothServer()
+
         if (service != null && !requireActivity().isChangingConfigurations) service?.detach()
         super.onStop()
 //        scope.cancel()
@@ -361,7 +374,10 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
         boundingBoxes.forEachIndexed { index, it ->
             Log.d("TTT onDetect", "$index $it")
         }
+        if (!isResumed) return
+
         requireActivity().runOnUiThread {
+            if (!isResumed) return@runOnUiThread
             handleDetectedObject(boundingBoxes)
             binding.inferenceTime.text = "${inferenceTime}ms"
             binding.overlay.apply {
@@ -402,9 +418,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun getVerticalAngle(diff: Double): Int? {
-        binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
-        showDiffColor(diff, binding.vDiff)
-        showTargetColor(diff, binding.aimHorizontal)
+        if (isResumed) {
+            binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
+            showDiffColor(diff, binding.vDiff)
+            showTargetColor(diff, binding.aimHorizontal)
+        }
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.35..0.5 -> 100
@@ -417,9 +435,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     }
 
     private fun getHorizontalAngle(diff: Double): Int {
-        binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
-        showDiffColor(diff, binding.hDiff)
-        showTargetColor(diff, binding.aimVertical)
+        if (isResumed) {
+            binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
+            showDiffColor(diff, binding.hDiff)
+            showTargetColor(diff, binding.aimVertical)
+        }
         val diffAbsoluteValue = diff.absoluteValue
         return when {
             diffAbsoluteValue in 0.45..0.5 -> 170
@@ -604,9 +624,21 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
                 Log.d("BTServer", "Waiting for connection...")
 
                 while (running) {
-                    val socket = serverSocket.accept()
-                    Log.d("BTServer", "Client connected: ${socket.remoteDevice.name}")
-                    handleClient(socket)
+                    try {
+                        val socket = serverSocket.accept()
+                        if (running) {
+                            Log.d("BTServer", "Client connected: ${socket.remoteDevice.name}")
+                            handleClient(socket)
+                        } else {
+                            socket.close()
+                            break
+                        }
+                    } catch (e: IOException) {
+                        if (running) {
+                            Log.e("BTServer", "Accept error: ${e.message}")
+                        }
+                        break
+                    }
                 }
             } catch (e: IOException) {
                 Log.e("BTServer", "Server error: ${e.message}")
@@ -622,6 +654,9 @@ class HomeFragment : Fragment(), Detector.DetectorListener, SerialListener, Serv
     private fun stopBluetoothServer() {
         running = false
         serverThread?.interrupt()
+        try {
+            serverThread?.join(1000)
+        } catch (_: InterruptedException) {}
     }
 
     private fun handleClient(socket: BluetoothSocket) {
