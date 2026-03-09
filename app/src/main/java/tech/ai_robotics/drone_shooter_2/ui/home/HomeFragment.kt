@@ -90,7 +90,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 Log.d("HomeFragment", "btLeft pressed: ${LEFT.commandValue} 30")
                 Toast.makeText(
                     requireContext(),
-                    "Command ${LEFT.commandValue} 30 removed (no Bluetooth)",
+                    getString(R.string.button_left) + " command removed (no Bluetooth)",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -98,7 +98,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 Log.d("HomeFragment", "btRight pressed: ${RIGHT.commandValue} 30")
                 Toast.makeText(
                     requireContext(),
-                    "Command ${RIGHT.commandValue} 30 removed (no Bluetooth)",
+                    getString(R.string.button_right) + " command removed (no Bluetooth)",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -106,7 +106,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 Log.d("HomeFragment", "btTop pressed: ${TOP.commandValue} 30")
                 Toast.makeText(
                     requireContext(),
-                    "Command ${TOP.commandValue} 30 removed (no Bluetooth)",
+                    getString(R.string.button_top) + " command removed (no Bluetooth)",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -114,7 +114,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 Log.d("HomeFragment", "btBottom pressed: ${BOTTOM.commandValue} 30")
                 Toast.makeText(
                     requireContext(),
-                    "Command ${BOTTOM.commandValue} 30 removed (no Bluetooth)",
+                    getString(R.string.button_bottom) + " command removed (no Bluetooth)",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -248,7 +248,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
         requireActivity().runOnUiThread {
             if (!isResumed) return@runOnUiThread
             handleDetectedObject(boundingBoxes)
-            binding.inferenceTime.text = "${inferenceTime}ms"
+            binding.inferenceTime.text =
+                getString(R.string.inference_time_ms, inferenceTime.toInt())
             binding.overlay.apply {
                 setResults(boundingBoxes)
                 invalidate()
@@ -289,7 +290,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
     private fun getVerticalAngle(diff: Double): Int? {
         if (isResumed) {
-            binding.vDiff.text = "vDiff: ${diff.times(-1).toString().substring(0, 10)}"
+            binding.vDiff.text =
+                getString(R.string.v_diff, diff.times(-1).toString().substring(0, 10))
             showDiffColor(diff, binding.vDiff)
             showTargetColor(diff, binding.aimHorizontal)
         }
@@ -306,7 +308,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
     private fun getHorizontalAngle(diff: Double): Int {
         if (isResumed) {
-            binding.hDiff.text = "hDiff: ${diff.times(-1).toString().substring(0, 10)}"
+            binding.hDiff.text =
+                getString(R.string.h_diff, diff.times(-1).toString().substring(0, 10))
             showDiffColor(diff, binding.hDiff)
             showTargetColor(diff, binding.aimVertical)
         }
@@ -328,7 +331,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
     private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
         val colorId = if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
-        textView.setTextColor(resources.getColor(colorId))
+        textView.setTextColor(ContextCompat.getColor(requireContext(), colorId))
     }
 
     private fun showTargetColor(diff: Double, view: View) {

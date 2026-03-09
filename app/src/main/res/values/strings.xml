@@ -7,7 +7,7 @@
 
     <string name="bluetooth_permission_title">Bluetooth permission</string>
     <string name="bluetooth_permission_grant">Bluetooth permission is required by this App. Please grant in next dialog.</string>
-    <string name="bluetooth_permission_denied">Bluetooth permission was permanently denied. You have to enable permission \"%s\" in App settings.</string>
+    <string name="bluetooth_permission_denied">Bluetooth permission was permanently denied. You have to enable permission "%s" in App settings.</string>
     <string name="devices">Bluetooth Devices</string>
     <string name="button_right">R</string>
     <string name="button_left">L</string>
@@ -20,4 +20,9 @@
     <string name="target_vertical">Target Vertical</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- New: localized UI strings for inference display -->
+    <string name="inference_time_ms">%dms</string>
+    <string name="v_diff">vDiff: %s</string>
+    <string name="h_diff">hDiff: %s</string>
 </resources>
