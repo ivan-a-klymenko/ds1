@@ -24,24 +24,32 @@ class DetectionViewModel(
     val state: StateFlow<DetectionState> = _state
 
     private var lastDetectJob: Job? = null
+    private var retryJob: Job? = null
+
+    companion object {
+        private const val RETRY_DELAY_MS = 2000L
+    }
 
     fun onDetect(boxes: List<BoundingBox>) {
         lastDetectJob?.cancel()
 
         val dtos = boxes.map { it.toDto() }
-        sendReport(dtos)
+        queueReport(dtos)
 
         lastDetectJob = viewModelScope.launch {
             try {
                 delay(1000)
-                sendReport(emptyList())
+                queueReport(emptyList())
             } catch (_: Exception) {
             }
         }
     }
 
-    private fun sendReport(boxes: List<BoundingBoxDto>) {
-        _state.value = _state.value.copy(isSending = true, lastBoxes = boxes)
+    private fun queueReport(boxes: List<BoundingBoxDto>) {
+        _state.value = _state.value.copy(
+            isSending = true,
+            lastBoxes = boxes
+        )
 
         val report = ReportMessage(
             id = UUID.randomUUID().toString(),
@@ -53,13 +61,48 @@ class DetectionViewModel(
         )
 
         viewModelScope.launch {
-            val ok = repo.sendReport(report)
+            repo.enqueueReport(report)
+
+            val ok = repo.flushQueue()
+            val hasPending = repo.hasPendingReports()
+
             _state.value = _state.value.copy(
-                isSending = false,
-                lastSent = System.currentTimeMillis()
+                isSending = hasPending,
+                lastSent = if (ok) System.currentTimeMillis() else _state.value.lastSent
             )
-            if (!ok) {
-                // log or handle failure
+
+            if (hasPending) {
+                ensureRetryLoop()
+            }
+        }
+    }
+
+    private fun ensureRetryLoop() {
+        if (retryJob?.isActive == true) return
+
+        retryJob = viewModelScope.launch {
+            while (true) {
+                val hasPending = repo.hasPendingReports()
+                if (!hasPending) {
+                    _state.value = _state.value.copy(isSending = false)
+                    break
+                }
+
+                val ok = repo.flushQueue()
+                val stillPending = repo.hasPendingReports()
+
+                _state.value = _state.value.copy(
+                    isSending = stillPending,
+                    lastSent = if (ok && !stillPending) {
+                        System.currentTimeMillis()
+                    } else {
+                        _state.value.lastSent
+                    }
+                )
+
+                if (!stillPending) break
+
+                delay(RETRY_DELAY_MS)
             }
         }
     }

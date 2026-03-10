@@ -1,6 +1,8 @@
 package tech.ai_robotics.drone_shooter_2.net.repository
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -16,7 +18,52 @@ class DetectionRepository(
 ) {
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
-    suspend fun sendReport(report: ReportMessage): Boolean {
+    private val queueMutex = Mutex()
+    private val drainMutex = Mutex()
+    private val pendingQueue = ArrayDeque<ReportMessage>()
+
+    suspend fun enqueueReport(report: ReportMessage) {
+        queueMutex.withLock {
+            pendingQueue.addLast(report)
+        }
+    }
+
+    suspend fun hasPendingReports(): Boolean {
+        return queueMutex.withLock { pendingQueue.isNotEmpty() }
+    }
+
+    suspend fun flushQueue(): Boolean {
+        // если уже есть активный drain, не запускаем второй
+        if (!drainMutex.tryLock()) {
+            return true
+        }
+
+        try {
+            while (true) {
+                val next = queueMutex.withLock {
+                    pendingQueue.firstOrNull()
+                } ?: return true
+
+                val ok = sendNow(next)
+                if (!ok) {
+                    return false
+                }
+
+                queueMutex.withLock {
+                    val first = pendingQueue.firstOrNull()
+                    if (first?.id == next.id) {
+                        pendingQueue.removeFirst()
+                    } else {
+                        pendingQueue.removeAll { it.id == next.id }
+                    }
+                }
+            }
+        } finally {
+            drainMutex.unlock()
+        }
+    }
+
+    private suspend fun sendNow(report: ReportMessage): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val url = ClientConfig.SERVER_HOST + ClientConfig.REPORT_PATH
@@ -56,7 +103,16 @@ class DetectionRepository(
                     .build()
 
                 client.newCall(req).execute().use { resp ->
-                    resp.isSuccessful
+                    if (!resp.isSuccessful) return@use false
+
+                    val respBody = resp.body?.string().orEmpty()
+                    if (respBody.isBlank()) return@use false
+
+                    val ack = JSONObject(respBody)
+                    val status = ack.optString("status")
+                    val ackId = ack.optString("id")
+
+                    status == "ok" && ackId == report.id
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
