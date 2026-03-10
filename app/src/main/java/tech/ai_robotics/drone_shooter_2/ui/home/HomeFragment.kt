@@ -23,8 +23,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import tech.ai_robotics.drone_shooter_2.R
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentHomeBinding
+import tech.ai_robotics.drone_shooter_2.net.viewmodel.DetectionViewModel
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.LABELS_PATH
 import tech.ai_robotics.drone_shooter_2.object_detection.Constants.SPOT_3X_10X_20X
@@ -42,6 +44,8 @@ import kotlin.math.absoluteValue
 const val TARGET_DIFF = 0.02
 
 class HomeFragment : Fragment(), Detector.DetectorListener {
+
+    private val detectionViewModel: DetectionViewModel by viewModels()
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -253,6 +257,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
                 invalidate()
             }
         }
+        detectionViewModel.onDetect(boundingBoxes)
     }
 
     private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
