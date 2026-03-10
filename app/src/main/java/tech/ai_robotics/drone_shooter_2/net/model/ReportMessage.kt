@@ -1,10 +1,14 @@
 package tech.ai_robotics.drone_shooter_2.net.model
 
+data class ReportPayload(
+    val boundingBoxes: List<BoundingBoxDto>
+)
+
 data class ReportMessage(
-    val id: String,                 // уникальный ID конкретного сообщения
-    val clientId: String,           // постоянный ID устройства
+    val id: String,
+    val clientId: String,
     val timestamp: Long,
-    val payload: Map<String, String>
+    val payload: ReportPayload
 )
 
 data class BoundingBoxDto(
