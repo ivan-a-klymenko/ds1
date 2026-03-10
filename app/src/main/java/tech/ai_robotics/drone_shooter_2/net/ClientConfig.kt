@@ -5,7 +5,7 @@ object ClientConfig {
     const val CLIENT_ID = "my-client-001"
 
     // URL сервера; по умолчанию локалхост - используется adb/usb forward или USB Ethernet
-    const val SERVER_HOST = "http://127.0.0.1:8080"
+    const val SERVER_HOST = "http://192.168.0.101:8080"
     const val REPORT_PATH = "/report"
 }
 
