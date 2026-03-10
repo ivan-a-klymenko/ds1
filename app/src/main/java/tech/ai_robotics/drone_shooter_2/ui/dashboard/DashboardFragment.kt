@@ -7,8 +7,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
-import tech.ai_robotics.drone_shooter_2.R
-import tech.ai_robotics.drone_shooter_2.bluetooth.DevicesFragment
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentDashboardBinding
 
 class DashboardFragment : Fragment(), FragmentManager.OnBackStackChangedListener {
@@ -24,8 +22,7 @@ class DashboardFragment : Fragment(), FragmentManager.OnBackStackChangedListener
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val dashboardViewModel =
-            ViewModelProvider(this).get(DashboardViewModel::class.java)
+        ViewModelProvider(this).get(DashboardViewModel::class.java)
 
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -37,14 +34,6 @@ class DashboardFragment : Fragment(), FragmentManager.OnBackStackChangedListener
 //            textView.text = it
 //        }
         return root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        childFragmentManager.addOnBackStackChangedListener(this)
-        if (savedInstanceState == null) childFragmentManager.beginTransaction()
-            .add(R.id.fragment, DevicesFragment(), "devices").commit()
-        else onBackStackChanged()
     }
 
     override fun onDestroyView() {

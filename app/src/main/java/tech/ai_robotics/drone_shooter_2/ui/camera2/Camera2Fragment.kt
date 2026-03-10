@@ -26,9 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import tech.ai_robotics.drone_shooter_2.bluetooth.Connected
-import tech.ai_robotics.drone_shooter_2.bluetooth.SerialService
-import tech.ai_robotics.drone_shooter_2.bluetooth.TextUtil
 import tech.ai_robotics.drone_shooter_2.databinding.FragmentCamera2Binding
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
 import tech.ai_robotics.drone_shooter_2.object_detection.Detector
@@ -67,11 +64,6 @@ class Camera2Fragment : Fragment() {
 
     private var hCommand: Direction? = null
     private var vCommand: Direction? = null
-
-    private var connected = Connected.FALSE
-    private val hexEnabled: Boolean = false
-    private val newline = TextUtil.newline_crlf
-    private var service: SerialService? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -148,7 +140,7 @@ class Camera2Fragment : Fragment() {
     }
 
     private fun handleDetectedObject(boundingBoxes: List<BoundingBox>) {
-        val box = boundingBoxes.minByOrNull {
+        boundingBoxes.minByOrNull {
             it.cx
         }
 //        box?.let {
