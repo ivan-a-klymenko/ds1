@@ -19,10 +19,12 @@ class DetectionRepository(
         return withContext(Dispatchers.IO) {
             try {
                 val url = ClientConfig.SERVER_HOST + ClientConfig.REPORT_PATH
-                // build JSON manually
+
                 val root = JSONObject()
                 root.put("id", report.id)
+                root.put("clientId", report.clientId)
                 root.put("timestamp", report.timestamp)
+
                 val payloadObj = JSONObject()
                 for ((k, v) in report.payload) {
                     payloadObj.put(k, v)
@@ -30,10 +32,12 @@ class DetectionRepository(
                 root.put("payload", payloadObj)
 
                 val body = root.toString().toRequestBody(mediaType)
+
                 val req = Request.Builder()
                     .url(url)
                     .post(body)
                     .build()
+
                 client.newCall(req).execute().use { resp ->
                     resp.isSuccessful
                 }

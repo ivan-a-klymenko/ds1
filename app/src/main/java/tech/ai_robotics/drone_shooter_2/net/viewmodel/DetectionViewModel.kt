@@ -15,6 +15,7 @@ import tech.ai_robotics.drone_shooter_2.net.model.BoundingBoxDto
 import tech.ai_robotics.drone_shooter_2.net.model.ReportMessage
 import tech.ai_robotics.drone_shooter_2.net.repository.DetectionRepository
 import tech.ai_robotics.drone_shooter_2.object_detection.BoundingBox
+import java.util.UUID
 
 class DetectionViewModel(
     private val repo: DetectionRepository = DetectionRepository()
@@ -66,7 +67,8 @@ class DetectionViewModel(
         // serialize boxes list into JSON string and put under key "boundingBoxes"
         payloadMap["boundingBoxes"] = boxesToJsonString(boxes)
         val report = ReportMessage(
-            id = ClientConfig.CLIENT_ID,
+            id = UUID.randomUUID().toString(),
+            clientId = ClientConfig.CLIENT_ID,
             timestamp = System.currentTimeMillis(),
             payload = payloadMap
         )

@@ -1,7 +1,8 @@
 package tech.ai_robotics.drone_shooter_2.net.model
 
 data class ReportMessage(
-    val id: String,
+    val id: String,                 // уникальный ID конкретного сообщения
+    val clientId: String,           // постоянный ID устройства
     val timestamp: Long,
     val payload: Map<String, String>
 )
