@@ -30,6 +30,17 @@ class DetectionViewModel(
         private const val RETRY_DELAY_MS = 2000L
     }
 
+    fun checkServerStatus(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = repo.checkStatus()
+                onResult(result)
+            } catch (e: Exception) {
+                onResult("error: ${e.message}")
+            }
+        }
+    }
+
     fun onDetect(boxes: List<BoundingBox>) {
         lastDetectJob?.cancel()
 

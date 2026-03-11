@@ -77,7 +77,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
         if (allPermissionsGranted()) {
             startCamera()
         } else {
-            ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                REQUIRED_PERMISSIONS,
+                REQUEST_CODE_PERMISSIONS
+            )
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -90,7 +94,28 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                detectionViewModel.onDetect(emptyList())
+//                detectionViewModel.checkServerStatus { result ->
+//                    requireActivity().runOnUiThread {
+//                        Toast.makeText(requireContext(), result, Toast.LENGTH_LONG).show()
+//                    }
+//                }
+                detectionViewModel.onDetect(
+                    listOf(
+                        BoundingBox(
+                            x1 = 0.001F,
+                            y1 = 0.001F,
+                            x2 = 0.001F,
+                            y2 = 0.001F,
+                            cx = 0.5F,
+                            cy = 0.5F,
+                            w = 0.0F,
+                            h = 0.0F,
+                            cnf = 0.0F,
+                            cls = 0,
+                            clsName = "test"
+                        )
+                    )
+                )
             }
             btRight.setOnClickListener {}
             btTop.setOnClickListener {}
@@ -100,7 +125,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
     override fun onResume() {
         super.onResume()
-        if (allPermissionsGranted()){
+        if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(REQUIRED_PERMISSIONS)
@@ -130,13 +155,14 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
-            cameraProvider  = cameraProviderFuture.get()
+            cameraProvider = cameraProviderFuture.get()
             bindCameraUseCases()
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     private fun bindCameraUseCases() {
-        val cameraProvider = cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
+        val cameraProvider =
+            cameraProvider ?: throw IllegalStateException("Camera initialization failed.")
 
         val rotation = binding.viewFinder.display.rotation
 
@@ -145,7 +171,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
 
-        preview =  Preview.Builder()
+        preview = Preview.Builder()
             .setTargetRotation(rotation)
             .build()
 
@@ -197,7 +223,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
             )
             camera?.cameraControl?.setZoomRatio(zoom)
             preview?.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-        } catch(exc: Exception) {
+        } catch (exc: Exception) {
             Log.e("HomeFragment", "Use case binding failed", exc)
         }
     }
@@ -207,8 +233,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()) {
-        if (it[Manifest.permission.CAMERA] == true) { startCamera() }
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        if (it[Manifest.permission.CAMERA] == true) {
+            startCamera()
+        }
     }
 
     override fun onEmptyDetect() {
@@ -239,7 +268,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
         }
         box?.let {
             val horizontalAngle = getHorizontalAngle(targetHorizontal - it.cx)
-            val horizontalDirection = when  {
+            val horizontalDirection = when {
                 it.cx < targetHorizontal - TARGET_DIFF -> RIGHT
                 it.cx > targetHorizontal + TARGET_DIFF -> LEFT
                 else -> STOP_X
@@ -251,7 +280,7 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
             )
 
             val verticalAngle = getVerticalAngle(targetVertical - it.cy)
-            val verticalDirection = when  {
+            val verticalDirection = when {
                 it.cy < targetVertical - TARGET_DIFF -> TOP
                 it.cy > targetVertical - TARGET_DIFF -> BOTTOM
                 else -> STOP_Y
@@ -306,7 +335,8 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
     }
 
     private fun showDiffColor(diff: Double, textView: AppCompatTextView) {
-        val colorId = if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
+        val colorId =
+            if (diff.absoluteValue < TARGET_DIFF) R.color.colorRecieveText else R.color.colorPrimary
         textView.setTextColor(ContextCompat.getColor(requireContext(), colorId))
     }
 
@@ -318,14 +348,14 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = mutableListOf (
+        private val REQUIRED_PERMISSIONS = mutableListOf(
             Manifest.permission.CAMERA
         ).toTypedArray()
     }
 }
 
 
-enum class Direction(val commandValue: String){
+enum class Direction(val commandValue: String) {
     LEFT("L"),
     RIGHT("R"),
     TOP("T"),

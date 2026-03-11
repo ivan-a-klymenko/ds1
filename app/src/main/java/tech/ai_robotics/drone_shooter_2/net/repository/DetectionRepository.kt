@@ -22,6 +22,22 @@ class DetectionRepository(
     private val drainMutex = Mutex()
     private val pendingQueue = ArrayDeque<ReportMessage>()
 
+    suspend fun checkStatus(): String {
+        return withContext(Dispatchers.IO) {
+            val url = ClientConfig.SERVER_HOST + ClientConfig.STATUS_PATH
+
+            val req = Request.Builder()
+                .url(url)
+                .get()
+                .build()
+
+            client.newCall(req).execute().use { resp ->
+                val body = resp.body?.string().orEmpty()
+                "code=${resp.code} body=$body"
+            }
+        }
+    }
+
     suspend fun enqueueReport(report: ReportMessage) {
         queueMutex.withLock {
             pendingQueue.addLast(report)
