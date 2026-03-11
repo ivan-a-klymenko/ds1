@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatTextView
@@ -91,37 +90,11 @@ class HomeFragment : Fragment(), Detector.DetectorListener {
         super.onViewCreated(view, savedInstanceState)
         with(binding) {
             btLeft.setOnClickListener {
-                Log.d("HomeFragment", "btLeft pressed: ${LEFT.commandValue} 30")
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.button_left) + " command removed (no Bluetooth)",
-                    Toast.LENGTH_SHORT
-                ).show()
+                detectionViewModel.onDetect(emptyList())
             }
-            btRight.setOnClickListener {
-                Log.d("HomeFragment", "btRight pressed: ${RIGHT.commandValue} 30")
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.button_right) + " command removed (no Bluetooth)",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            btTop.setOnClickListener {
-                Log.d("HomeFragment", "btTop pressed: ${TOP.commandValue} 30")
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.button_top) + " command removed (no Bluetooth)",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            btBottom.setOnClickListener {
-                Log.d("HomeFragment", "btBottom pressed: ${BOTTOM.commandValue} 30")
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.button_bottom) + " command removed (no Bluetooth)",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            btRight.setOnClickListener {}
+            btTop.setOnClickListener {}
+            btBottom.setOnClickListener {}
         }
     }
 
